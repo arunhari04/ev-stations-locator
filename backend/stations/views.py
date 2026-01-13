@@ -19,7 +19,7 @@ def haversine(lon1, lat1, lon2, lat2):
 @api_permission_classes([permissions.AllowAny])
 def station_options(request):
     # Get all unique charger types
-    types = list(Station.objects.values_list('chargers__charger_type', flat=True).distinct())
+    types = list(Station.objects.values_list('station_chargers__charger_type__name', flat=True).distinct())
     unique_types = sorted(list(set([t for t in types if t])))
 
     # Get all unique amenities
@@ -89,7 +89,7 @@ def search_stations(request):
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
 def filter_stations(request):
-    queryset = Station.objects.all().prefetch_related('chargers', 'amenities', 'images', 'operator').distinct()
+    queryset = Station.objects.all().prefetch_related('station_chargers', 'chargers', 'amenities', 'images', 'operator').distinct()
     
     # 1. Availability
     availability = request.query_params.get('availability')
@@ -105,13 +105,13 @@ def filter_stations(request):
         q_objects = Q()
         for rt in requested_types:
             if rt == 'ac':
-                q_objects |= Q(chargers__charger_type__icontains='AC') | Q(chargers__charger_type__icontains='Level 2')
+                q_objects |= Q(station_chargers__charger_type__name__icontains='AC') | Q(station_chargers__charger_type__name__icontains='Level 2')
             elif rt == 'dc':
-                q_objects |= Q(chargers__charger_type__icontains='DC') | Q(chargers__charger_type__icontains='Fast') | Q(chargers__charger_type__icontains='CCS')
+                q_objects |= Q(station_chargers__charger_type__name__icontains='DC') | Q(station_chargers__charger_type__name__icontains='Fast') | Q(station_chargers__charger_type__name__icontains='CCS')
             elif rt == 'tesla':
-                q_objects |= Q(chargers__charger_type__icontains='Tesla') | Q(chargers__charger_type__icontains='Supercharger')
+                q_objects |= Q(station_chargers__charger_type__name__icontains='Tesla') | Q(station_chargers__charger_type__name__icontains='Supercharger')
             else:
-                q_objects |= Q(chargers__charger_type__icontains=rt)
+                q_objects |= Q(station_chargers__charger_type__name__icontains=rt)
         
         if q_objects:
             queryset = queryset.filter(q_objects)
@@ -131,9 +131,9 @@ def filter_stations(request):
     price_max = request.query_params.get('price_max')
     
     if price_min:
-        queryset = queryset.filter(chargers__price_per_kwh__gte=float(price_min))
+        queryset = queryset.filter(station_chargers__start_price__gte=float(price_min))
     if price_max:
-        queryset = queryset.filter(chargers__price_per_kwh__lte=float(price_max))
+        queryset = queryset.filter(station_chargers__end_price__lte=float(price_max))
 
     # Convert to list for distance calc (cannot easily do geodistance in sqlite ORM without specialized libs)
     stations = list(queryset.distinct())
@@ -183,9 +183,9 @@ def filter_stations(request):
         filtered_stations.sort(key=lambda x: x.distance if x.distance is not None else 999999)
     elif sort == 'cheapest':
         # Need to re-calculate min price for sorting since we don't have it annotated yet
-        filtered_stations.sort(key=lambda x: min([c.price_per_kwh for c in x.chargers.all()] or [999]))
+        filtered_stations.sort(key=lambda x: min([c.start_price for c in x.station_chargers.all()] or [999]))
     elif sort == 'fastest':
-        filtered_stations.sort(key=lambda x: max([c.power_kw for c in x.chargers.all()] or [0]), reverse=True)
+        filtered_stations.sort(key=lambda x: max([c.charger_type.max_power_kw for c in x.station_chargers.all()] or [0]), reverse=True)
         
     serializer = StationSerializer(filtered_stations, many=True, context={'request': request})
     return Response(serializer.data)
@@ -201,7 +201,7 @@ class MapStationSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'latitude', 'longitude', 'charger_types', 'status']
 
     def get_charger_types(self, obj):
-        return list(obj.chargers.values_list('charger_type', flat=True).distinct())
+        return list(obj.station_chargers.values_list('charger_type__name', flat=True).distinct())
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])

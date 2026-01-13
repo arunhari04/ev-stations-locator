@@ -48,14 +48,37 @@ class StationImage(models.Model):
     def __str__(self):
         return f"Image for {self.station.name}"
 
-class Charger(models.Model):
-    station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='chargers')
-    charger_type = models.CharField(max_length=50, help_text="DC, AC, CCS, CHAdeMO")
-    power_kw = models.FloatField()
-    price_per_kwh = models.FloatField()
+class ChargerType(models.Model):
+    name = models.CharField(max_length=100, help_text="e.g. CCS2, Type 2, CHAdeMO")
+    connector_type = models.CharField(max_length=50, help_text="Physical connector standard")
+    max_power_kw = models.FloatField()
 
     def __str__(self):
-        return f"{self.charger_type} ({self.power_kw}kW) at {self.station.name}"
+        return f"{self.name} ({self.max_power_kw}kW)"
+
+class StationCharger(models.Model):
+    station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='station_chargers')
+    charger_type = models.ForeignKey(ChargerType, on_delete=models.CASCADE, related_name='station_links')
+    
+    # Station specific details for this type
+    start_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    end_price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    is_available = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('station', 'charger_type')
+
+    def __str__(self):
+        return f"{self.charger_type.name} at {self.station.name}"
+
+class Charger(models.Model):
+    # Represents a physical plug/unit
+    station_charger = models.ForeignKey(StationCharger, on_delete=models.CASCADE, related_name='units', null=True)
+    # Kept station for backward compatibility if needed, but ideally we access via station_charger
+    station = models.ForeignKey(Station, on_delete=models.CASCADE, related_name='chargers') 
+    
+    def __str__(self):
+        return f"Unit for {self.station_charger}"
 
 class Favorite(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favorites')

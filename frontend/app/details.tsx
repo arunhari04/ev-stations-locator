@@ -178,14 +178,32 @@ export default function DetailsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Charger Types</Text>
           <View style={styles.chargerList}>
-            {station.charger_types?.map((type: string, idx: number) => (
+            {station.station_chargers?.map((charger: any, idx: number) => (
               <View key={idx} style={styles.chargerItem}>
                 <View style={styles.chargerIcon}>
-                  <Zap size={20} color="#10b981" strokeWidth={2} />
+                  <Zap
+                    size={20}
+                    color={charger.is_available ? "#10b981" : "#ef4444"}
+                    strokeWidth={2}
+                  />
                 </View>
                 <View style={styles.chargerInfo}>
-                  <Text style={styles.chargerName}>{type}</Text>
-                  <Text style={styles.chargerPower}>{station.power_kw} kW</Text>
+                  <Text style={styles.chargerName}>{charger.name}</Text>
+                  <Text style={styles.chargerPower}>
+                    {charger.max_power_kw} kW • {charger.connector_type}
+                  </Text>
+                </View>
+                <View style={{ alignItems: "flex-end" }}>
+                  <Text
+                    style={{ fontSize: 14, fontWeight: "600", color: "#111" }}
+                  >
+                    {charger.start_price > 0
+                      ? `$${charger.start_price}/kWh`
+                      : "Free"}
+                  </Text>
+                  {!charger.is_available && (
+                    <Text style={{ fontSize: 12, color: "#ef4444" }}>Busy</Text>
+                  )}
                 </View>
               </View>
             ))}
