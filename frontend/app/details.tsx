@@ -69,9 +69,16 @@ export default function DetailsScreen() {
   };
 
   const openNavigation = () => {
-    if (station?.navigation_url) {
-      Linking.openURL(station.navigation_url);
-    }
+    router.push({
+      pathname: "/navigation",
+      params: {
+        stationId: station.id,
+        lat: station.latitude,
+        lng: station.longitude,
+        name: station.name,
+        address: station.address,
+      },
+    });
   };
 
   if (loading) {
