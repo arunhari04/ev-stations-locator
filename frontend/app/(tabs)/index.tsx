@@ -295,6 +295,14 @@ export default function HomeScreen() {
           <List size={20} color="#374151" strokeWidth={2} />
           <Text style={styles.listButtonText}>List View</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.servicesButton}
+          onPress={() => router.push("/services")}
+        >
+          <Zap size={20} color="#374151" strokeWidth={2} />
+          <Text style={styles.servicesButtonText}>Services</Text>
+        </TouchableOpacity>
       </View>
 
       <View style={styles.bottomSheet}>
@@ -399,6 +407,27 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   listButtonText: {
+    fontSize: 14,
+    color: "#374151",
+  },
+  servicesButton: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#fff",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  servicesButtonText: {
     fontSize: 14,
     fontWeight: "500",
     color: "#374151",

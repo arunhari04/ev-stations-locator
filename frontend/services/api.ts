@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Adjust this if testing on Android Emulator (10.0.2.2) vs Physical Device (LAN IP)
 // The user provided IP: 10.189.164.117 (Old), Detected: 10.43.173.117
-const API_BASE_URL = 'http://10.189.164.117:8000/api';
+const API_BASE_URL = 'http://192.168.43.122:8000/api';
 
 const getHeaders = async () => {
   const token = await AsyncStorage.getItem('auth_token');

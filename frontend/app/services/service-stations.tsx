@@ -95,13 +95,6 @@ export default function ServiceStationsScreen() {
         />
       </View>
 
-      <View style={styles.mapContainer}>
-        <View style={styles.mapPlaceholder}>
-          <MapPin size={48} color="#9ca3af" strokeWidth={2} />
-          <Text style={styles.mapText}>Map View - EV Service Stations</Text>
-        </View>
-      </View>
-
       <View style={styles.listContainer}>
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>Nearby Service Centers</Text>
