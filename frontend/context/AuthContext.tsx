@@ -91,7 +91,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           api
             .updateLocation(lat, lng)
             .catch((err) => console.log("Loc sync err", err));
-        }
+        },
       );
     } catch (e) {
       console.log("Error starting location tracking", e);
@@ -193,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Force immediate location update after login
       getCurrentLocation().catch((err) =>
-        console.log("Initial location sync failed", err)
+        console.log("Initial location sync failed", err),
       );
     } catch (error) {
       throw error;
@@ -214,7 +214,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const stopLocationTracking = () => {
+    if (locationSubscription.current) {
+      locationSubscription.current.remove();
+      locationSubscription.current = null;
+    }
+  };
+
   const signOut = async () => {
+    stopLocationTracking();
     await api.logout();
     await AsyncStorage.removeItem("auth_token");
     await AsyncStorage.removeItem("refresh_token");

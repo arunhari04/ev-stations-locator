@@ -185,7 +185,7 @@ export default function DetailsScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Charger Types</Text>
           <View style={styles.chargerList}>
-            {station.station_chargers?.map((charger: any, idx: number) => (
+            {station.place_chargers?.map((charger: any, idx: number) => (
               <View key={idx} style={styles.chargerItem}>
                 <View style={styles.chargerIcon}>
                   <Zap

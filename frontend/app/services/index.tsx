@@ -32,16 +32,6 @@ export default function ServicesScreen() {
       bgColor: "#fffbeb",
       count: "8 nearby",
     },
-    {
-      id: "battery",
-      icon: Zap,
-      title: "Battery Shops",
-      subtitle: "Battery Solutions",
-      description: "Buy and replace EV batteries with warranty",
-      color: "#ec4899",
-      bgColor: "#fce7f3",
-      count: "6 nearby",
-    },
   ];
 
   return (
@@ -63,7 +53,6 @@ export default function ServicesScreen() {
                 router.push("/services/showrooms");
               else if (service.id === "service")
                 router.push("/services/service-stations");
-              else router.push("/services/battery-shops");
             }}
           >
             <View
@@ -113,21 +102,6 @@ export default function ServicesScreen() {
             <Text style={styles.quickAccessTitle}>Regular Maintenance</Text>
             <Text style={styles.quickAccessSubtitle}>
               Schedule your EV check-up today
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.quickAccessCard}
-          onPress={() => router.push("/services/battery-shops")}
-        >
-          <View style={styles.quickAccessIcon}>
-            <Zap size={24} color="#ec4899" strokeWidth={2} />
-          </View>
-          <View style={styles.quickAccessContent}>
-            <Text style={styles.quickAccessTitle}>Battery Replacement</Text>
-            <Text style={styles.quickAccessSubtitle}>
-              Find genuine batteries with warranty
             </Text>
           </View>
         </TouchableOpacity>
