@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { WebView } from "react-native-webview";
-import { MapPin, List, Zap } from "lucide-react-native";
+import { MapPin, List, Zap, ShoppingBag } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -159,6 +159,15 @@ export default function HomeScreen() {
         shadowSize: [41, 41]
       });
 
+      const showroomIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+      });
+
       const userIcon = L.divIcon({
           className: 'user-marker',
           html: '<div style="background-color: #3b82f6; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.3);"></div>',
@@ -171,12 +180,14 @@ export default function HomeScreen() {
         markers = [];
 
         stations.forEach(station => {
-          const marker = L.marker([station.latitude, station.longitude], { icon: stationIcon })
+          const icon = station.place_type === 'SHOWROOM' ? showroomIcon : stationIcon;
+          const marker = L.marker([station.latitude, station.longitude], { icon: icon })
             .addTo(map)
             .on('click', () => {
               window.ReactNativeWebView.postMessage(JSON.stringify({ 
                 type: 'MARKER_CLICK', 
-                id: station.id 
+                id: station.id,
+                place_type: station.place_type
               }));
             });
 
@@ -228,7 +239,14 @@ export default function HomeScreen() {
     try {
       const data = JSON.parse(event.nativeEvent.data);
       if (data.type === "MARKER_CLICK") {
-        router.push({ pathname: "/details", params: { id: data.id } });
+        if (data.place_type === "SHOWROOM") {
+          router.push({
+            pathname: "/showroom-details",
+            params: { id: data.id },
+          });
+        } else {
+          router.push({ pathname: "/details", params: { id: data.id } });
+        }
       }
     } catch (e) {}
   };
@@ -321,17 +339,31 @@ export default function HomeScreen() {
               style={styles.stationCard}
               onPress={() =>
                 router.push({
-                  pathname: "/details",
+                  pathname:
+                    station.place_type === "SHOWROOM"
+                      ? "/showroom-details"
+                      : "/details",
                   params: { id: station.id },
                 })
               }
             >
               <View style={styles.stationIcon}>
-                <Zap size={24} color="#10b981" strokeWidth={2} />
+                {station.place_type === "SHOWROOM" ? (
+                  <ShoppingBag size={24} color="#3b82f6" strokeWidth={2} />
+                ) : (
+                  <Zap size={24} color="#10b981" strokeWidth={2} />
+                )}
               </View>
               <View style={styles.stationInfo}>
                 <Text style={styles.stationName}>{station.name}</Text>
-                <Text style={styles.stationOperator}>{station.operator}</Text>
+                <Text
+                  style={[
+                    styles.stationOperator,
+                    station.place_type === "SHOWROOM" && { color: "#3b82f6" },
+                  ]}
+                >
+                  {station.operator}
+                </Text>
                 <Text style={styles.stationAddress}>
                   {station.distance
                     ? station.distance.toFixed(1) + " km"

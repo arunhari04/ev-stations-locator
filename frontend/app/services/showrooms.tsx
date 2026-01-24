@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,62 +7,69 @@ import {
   ScrollView,
   Image,
   TextInput,
+  ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import {
-  ChevronLeft,
-  MapPin,
-  Phone,
-  Star,
-  Search,
-  List,
-} from "lucide-react-native";
+import { ChevronLeft, MapPin, Phone, Search, List } from "lucide-react-native";
+import { api } from "../../services/api";
 
-const MOCK_SHOWROOMS = [
-  {
-    id: 1,
-    name: "Tesla Experience Center",
-    address: "555 Market Street",
-    distance: "0.2 mi",
-    phone: "+1-415-xxx-xxxx",
-    rating: 4.8,
-    reviews: 328,
-    brands: ["Tesla"],
-    hours: "10:00 AM - 7:00 PM",
-    image:
-      "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-  {
-    id: 2,
-    name: "EV Motors Plus",
-    address: "888 Van Ness Avenue",
-    distance: "0.6 mi",
-    phone: "+1-415-xxx-xxxx",
-    rating: 4.6,
-    reviews: 215,
-    brands: ["Nissan", "Chevrolet", "BMW", "Audi"],
-    hours: "9:00 AM - 6:00 PM",
-    image:
-      "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-  {
-    id: 3,
-    name: "Green Mobility Hub",
-    address: "333 Grant Avenue",
-    distance: "0.9 mi",
-    phone: "+1-415-xxx-xxxx",
-    rating: 4.7,
-    reviews: 287,
-    brands: ["Hyundai", "Kia", "Volkswagen"],
-    hours: "9:30 AM - 7:00 PM",
-    image:
-      "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=400",
-  },
-];
+type Place = {
+  id: number;
+  name: string;
+  place_type: "CHARGING" | "SHOWROOM" | "SERVICE";
+  address: string;
+  distance?: number;
+  operator?: string; // Serializer returns string name
+  opening_hours?: string;
+  images: string[];
+  status: string;
+};
 
 export default function ShowroomsScreen() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [showrooms, setShowrooms] = useState<Place[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchShowrooms();
+  }, []);
+
+  const fetchShowrooms = async () => {
+    try {
+      setLoading(true);
+      // Default to SF location if no user location, or use a method to get location if available.
+      // For now, we'll try to get nearby places with a default or last known location.
+      // Ideally we'd use api.getCurrentLocation() but that requires permission setup which might be complex here.
+      // We will use a wide search or default SF coordinates for the demo: 37.7749, -122.4194
+
+      let lat = 37.7749;
+      let lng = -122.4194;
+
+      const location = await api.getCurrentLocation();
+      if (location) {
+        lat = location.latitude;
+        lng = location.longitude;
+      }
+
+      // Fetch nearby places within 50km/miles to ensure we find some
+      const places: Place[] = await api.getNearbyPlaces(lat, lng, 50);
+
+      // Filter for restricted SHOWROOM type only
+      const showroomList = places.filter((p) => p.place_type === "SHOWROOM");
+      setShowrooms(showroomList);
+    } catch (err) {
+      console.error("Failed to fetch showrooms:", err);
+      setError("Failed to load showrooms");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredShowrooms = showrooms.filter((place) =>
+    place.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <View style={styles.container}>
@@ -93,67 +100,73 @@ export default function ShowroomsScreen() {
         <View style={styles.listHeader}>
           <Text style={styles.listTitle}>Nearby Showrooms</Text>
           <Text style={styles.resultCount}>
-            {MOCK_SHOWROOMS.length} results
+            {filteredShowrooms.length} results
           </Text>
         </View>
 
-        <ScrollView
-          style={styles.showroomList}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.listContent}
-        >
-          {MOCK_SHOWROOMS.map((showroom) => (
-            <TouchableOpacity
-              key={showroom.id}
-              style={styles.showroomCard}
-              onPress={() => router.push(`/showroom-details?id=${showroom.id}`)}
-            >
-              <Image
-                source={{ uri: showroom.image }}
-                style={styles.showroomImage}
-              />
-              <View style={styles.cardContent}>
-                <View style={styles.cardHeader}>
-                  <View style={styles.cardTitle}>
-                    <Text style={styles.showroomName}>{showroom.name}</Text>
-                    <View style={styles.ratingContainer}>
-                      <Star
-                        size={16}
-                        color="#fbbf24"
-                        fill="#fbbf24"
-                        strokeWidth={2}
-                      />
-                      <Text style={styles.rating}>{showroom.rating}</Text>
-                      <Text style={styles.reviews}>({showroom.reviews})</Text>
+        {loading ? (
+          <View style={styles.center}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+          </View>
+        ) : (
+          <ScrollView
+            style={styles.showroomList}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.listContent}
+          >
+            {filteredShowrooms.map((showroom) => (
+              <TouchableOpacity
+                key={showroom.id}
+                style={styles.showroomCard}
+                onPress={() =>
+                  router.push(`/showroom-details?id=${showroom.id}`)
+                }
+              >
+                <Image
+                  source={{
+                    uri:
+                      showroom.images?.[0] ||
+                      "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=400",
+                  }}
+                  style={styles.showroomImage}
+                />
+                <View style={styles.cardContent}>
+                  <View style={styles.cardHeader}>
+                    <View style={styles.cardTitle}>
+                      <Text style={styles.showroomName}>{showroom.name}</Text>
+                      {/* Rating removed as requested */}
+                    </View>
+                    {showroom.distance !== undefined && (
+                      <Text style={styles.distance}>
+                        {showroom.distance.toFixed(1)} mi
+                      </Text>
+                    )}
+                  </View>
+
+                  <View style={styles.cardDetails}>
+                    <View style={styles.detailRow}>
+                      <MapPin size={16} color="#6b7280" strokeWidth={2} />
+                      <Text style={styles.detailText}>{showroom.address}</Text>
+                    </View>
+                    {/* Phone might be available in detailed view, but serializer lists operator name here mostly */}
+                  </View>
+
+                  <View style={styles.brandsContainer}>
+                    <View style={styles.brandTag}>
+                      <Text style={styles.brandText}>
+                        {showroom.operator || "Showroom"}
+                      </Text>
                     </View>
                   </View>
-                  <Text style={styles.distance}>{showroom.distance}</Text>
-                </View>
 
-                <View style={styles.cardDetails}>
-                  <View style={styles.detailRow}>
-                    <MapPin size={16} color="#6b7280" strokeWidth={2} />
-                    <Text style={styles.detailText}>{showroom.address}</Text>
-                  </View>
-                  <View style={styles.detailRow}>
-                    <Phone size={16} color="#6b7280" strokeWidth={2} />
-                    <Text style={styles.detailText}>{showroom.phone}</Text>
-                  </View>
+                  {showroom.opening_hours && (
+                    <Text style={styles.hours}>{showroom.opening_hours}</Text>
+                  )}
                 </View>
-
-                <View style={styles.brandsContainer}>
-                  {showroom.brands.map((brand, idx) => (
-                    <View key={idx} style={styles.brandTag}>
-                      <Text style={styles.brandText}>{brand}</Text>
-                    </View>
-                  ))}
-                </View>
-
-                <Text style={styles.hours}>{showroom.hours}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
       </View>
     </View>
   );
@@ -163,6 +176,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     flexDirection: "row",
@@ -196,24 +214,6 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: "#374151",
-  },
-  mapContainer: {
-    height: 200,
-    backgroundColor: "#f3f4f6",
-    marginHorizontal: 16,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginBottom: 16,
-  },
-  mapPlaceholder: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  mapText: {
-    fontSize: 14,
-    color: "#9ca3af",
-    marginTop: 8,
   },
   listContainer: {
     flex: 1,
@@ -274,20 +274,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#111",
     marginBottom: 4,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  rating: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#111",
-  },
-  reviews: {
-    fontSize: 14,
-    color: "#6b7280",
   },
   distance: {
     fontSize: 14,

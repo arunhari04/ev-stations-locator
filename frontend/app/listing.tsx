@@ -110,7 +110,13 @@ export default function ListingScreen() {
               station.status === "OFFLINE" && styles.stationCardDisabled,
             ]}
             onPress={() =>
-              router.push({ pathname: "/details", params: { id: station.id } })
+              router.push({
+                pathname:
+                  station.place_type === "SHOWROOM"
+                    ? "/showroom-details"
+                    : "/details",
+                params: { id: station.id },
+              })
             }
           >
             <Image
@@ -126,7 +132,14 @@ export default function ListingScreen() {
               <View style={styles.stationHeader}>
                 <View style={styles.stationInfo}>
                   <Text style={styles.stationName}>{station.name}</Text>
-                  <Text style={styles.stationOperator}>{station.operator}</Text>
+                  <Text
+                    style={[
+                      styles.stationOperator,
+                      station.place_type === "SHOWROOM" && { color: "#3b82f6" },
+                    ]}
+                  >
+                    {station.operator}
+                  </Text>
                   <Text style={styles.stationAddress}>{station.address}</Text>
                 </View>
                 <TouchableOpacity>
@@ -145,6 +158,7 @@ export default function ListingScreen() {
                     styles.availabilityBadge,
                     station.status === "OFFLINE" && styles.unavailableBadge,
                     station.status === "BUSY" && styles.limitedBadge,
+                    station.place_type === "SHOWROOM" && styles.showroomBadge,
                   ]}
                 >
                   <Text
@@ -152,6 +166,7 @@ export default function ListingScreen() {
                       styles.availabilityText,
                       station.status === "OFFLINE" && styles.unavailableText,
                       station.status === "BUSY" && styles.limitedText,
+                      station.place_type === "SHOWROOM" && styles.showroomText,
                     ]}
                   >
                     {station.status}
@@ -340,6 +355,12 @@ const styles = StyleSheet.create({
   typeBadge: {
     fontSize: 12,
     color: "#6b7280",
+  },
+  showroomBadge: {
+    backgroundColor: "#eff6ff",
+  },
+  showroomText: {
+    color: "#3b82f6",
   },
   stationFooter: {
     flexDirection: "row",

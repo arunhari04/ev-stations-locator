@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -5,6 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
+  ActivityIndicator,
+  Linking,
+  Platform,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import {
@@ -13,145 +17,300 @@ import {
   Mail,
   MapPin,
   Globe,
-  Star,
   Clock,
   Heart,
 } from "lucide-react-native";
+import { api } from "../services/api";
+
+type Showroom = {
+  id: number;
+  name: string;
+  place_type: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  opening_hours: string | null;
+  status: string;
+  operator: {
+    name: string;
+    phone: string | null;
+    email: string | null;
+    website: string | null;
+  } | null;
+  amenities: string[];
+  images: string[];
+  distance?: number;
+  is_favorite: boolean;
+};
 
 export default function ShowroomDetailsScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
+  const { id } = useLocalSearchParams();
+
+  const [showroom, setShowroom] = useState<Showroom | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [favorite, setFavorite] = useState(false);
+
+  useEffect(() => {
+    fetchShowroomData();
+  }, [id]);
+
+  useEffect(() => {
+    if (showroom) {
+      setFavorite(showroom.is_favorite);
+    }
+  }, [showroom]);
+
+  const fetchShowroomData = async () => {
+    try {
+      if (!id) return;
+      setLoading(true);
+      setError(null);
+      const data = await api.getShowroomDetails(Number(id));
+      setShowroom(data);
+    } catch (err) {
+      console.error("Failed to fetch showroom:", err);
+      setError("Failed to load showroom details. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleFavorite = async () => {
+    if (!showroom) return;
+    try {
+      if (favorite) {
+        await api.removeFavorite(showroom.id);
+        setFavorite(false);
+      } else {
+        await api.addFavorite(showroom.id);
+        setFavorite(true);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const getAmenityIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes("wifi")) return "📶";
+    if (lower.includes("coffee") || lower.includes("cafe")) return "☕";
+    if (lower.includes("test drive")) return "🚗";
+    if (lower.includes("showroom")) return "🏢";
+    if (lower.includes("parking")) return "🅿️";
+    if (lower.includes("restroom") || lower.includes("toilet")) return "🚻";
+    if (lower.includes("wheelchair")) return "♿";
+    return "✅"; // Default
+  };
+
+  const handleCall = () => {
+    if (showroom?.operator?.phone) {
+      Linking.openURL(`tel:${showroom.operator.phone}`);
+    }
+  };
+
+  const handleEmail = () => {
+    if (showroom?.operator?.email) {
+      Linking.openURL(`mailto:${showroom.operator.email}`);
+    }
+  };
+
+  const handleWebsite = () => {
+    if (showroom?.operator?.website) {
+      Linking.openURL(showroom.operator.website);
+    }
+  };
+
+  const handleDirections = () => {
+    if (showroom) {
+      const scheme = Platform.select({ ios: "maps:", android: "geo:" });
+      const url = Platform.select({
+        ios: `${scheme}?q=${showroom.name}&ll=${showroom.latitude},${showroom.longitude}`,
+        android: `${scheme}0,0?q=${showroom.latitude},${showroom.longitude}(${showroom.name})`,
+      });
+      if (url) Linking.openURL(url);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <ActivityIndicator size="large" color="#3b82f6" />
+      </View>
+    );
+  }
+
+  if (error || !showroom) {
+    return (
+      <View style={[styles.container, styles.center]}>
+        <Text style={styles.errorText}>{error || "Showroom not found"}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={fetchShowroomData}
+        >
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.backButtonFixed}
+          onPress={() => router.back()}
+        >
+          <ChevronLeft size={24} color="#111" />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Use the first image from API or a fallback
+  const heroImage =
+    showroom.images.length > 0
+      ? { uri: showroom.images[0] }
+      : {
+          uri: "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=1200",
+        };
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.imageContainer}>
-        <Image
-          source={{
-            uri: "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=1200",
-          }}
-          style={styles.image}
-        />
+        <Image source={heroImage} style={styles.image} />
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
           <ChevronLeft size={24} color="#fff" strokeWidth={2} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.favoriteButton}>
-          <Heart size={24} color="#ec4899" fill="#ec4899" strokeWidth={2} />
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={toggleFavorite}
+        >
+          <Heart
+            size={24}
+            color={favorite ? "#ec4899" : "#111"}
+            fill={favorite ? "#ec4899" : "rgba(255,255,255,0.8)"}
+            strokeWidth={2}
+          />
         </TouchableOpacity>
       </View>
 
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleContainer}>
-            <Text style={styles.showroomName}>Tesla Experience Center</Text>
-            <View style={styles.ratingContainer}>
-              <Star size={18} color="#fbbf24" fill="#fbbf24" strokeWidth={2} />
-              <Text style={styles.rating}>4.8</Text>
-              <Text style={styles.reviews}>(328 reviews)</Text>
-            </View>
+            <Text style={styles.showroomName}>{showroom.name}</Text>
           </View>
-          <Text style={styles.distance}>0.2 mi away</Text>
+          {showroom.distance !== undefined && (
+            <Text style={styles.distance}>
+              {showroom.distance.toFixed(1)} mi away
+            </Text>
+          )}
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact Information</Text>
-          <TouchableOpacity style={styles.contactItem}>
+
+          <TouchableOpacity
+            style={styles.contactItem}
+            onPress={handleDirections}
+          >
             <MapPin size={20} color="#3b82f6" strokeWidth={2} />
             <View style={styles.contactContent}>
               <Text style={styles.contactLabel}>Address</Text>
-              <Text style={styles.contactValue}>
-                555 Market Street, San Francisco
-              </Text>
+              <Text style={styles.contactValue}>{showroom.address}</Text>
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.contactItem}>
-            <Phone size={20} color="#3b82f6" strokeWidth={2} />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Phone</Text>
-              <Text style={styles.contactValue}>+1-415-xxx-xxxx</Text>
-            </View>
-          </TouchableOpacity>
+          {showroom.operator?.phone && (
+            <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
+              <Phone size={20} color="#3b82f6" strokeWidth={2} />
+              <View style={styles.contactContent}>
+                <Text style={styles.contactLabel}>Phone</Text>
+                <Text style={styles.contactValue}>
+                  {showroom.operator.phone}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={styles.contactItem}>
-            <Mail size={20} color="#3b82f6" strokeWidth={2} />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Email</Text>
-              <Text style={styles.contactValue}>info@tesla-sf.com</Text>
-            </View>
-          </TouchableOpacity>
+          {showroom.operator?.email && (
+            <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
+              <Mail size={20} color="#3b82f6" strokeWidth={2} />
+              <View style={styles.contactContent}>
+                <Text style={styles.contactLabel}>Email</Text>
+                <Text style={styles.contactValue}>
+                  {showroom.operator.email}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
 
-          <TouchableOpacity style={styles.contactItem}>
-            <Globe size={20} color="#3b82f6" strokeWidth={2} />
-            <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Website</Text>
-              <Text style={styles.contactValue}>www.tesla.com</Text>
-            </View>
-          </TouchableOpacity>
+          {showroom.operator?.website && (
+            <TouchableOpacity
+              style={styles.contactItem}
+              onPress={handleWebsite}
+            >
+              <Globe size={20} color="#3b82f6" strokeWidth={2} />
+              <View style={styles.contactContent}>
+                <Text style={styles.contactLabel}>Website</Text>
+                <Text style={styles.contactValue}>
+                  {showroom.operator.website}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          )}
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Operating Hours</Text>
-          <View style={styles.hoursCard}>
-            <Clock size={20} color="#3b82f6" strokeWidth={2} />
-            <View style={styles.hoursContent}>
-              <Text style={styles.hoursTitle}>10:00 AM - 7:00 PM</Text>
-              <Text style={styles.hoursSubtitle}>Daily</Text>
+        {showroom.opening_hours && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Operating Hours</Text>
+            <View style={styles.hoursCard}>
+              <Clock size={20} color="#3b82f6" strokeWidth={2} />
+              <View style={styles.hoursContent}>
+                <Text style={styles.hoursTitle}>{showroom.opening_hours}</Text>
+                <Text style={styles.hoursSubtitle}>Daily</Text>
+              </View>
             </View>
           </View>
-        </View>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Available Brands</Text>
           <View style={styles.brandsContainer}>
             <View style={styles.brandCard}>
-              <Text style={styles.brandName}>Tesla</Text>
+              <Text style={styles.brandName}>
+                {showroom.operator?.name || "Unknown Brand"}
+              </Text>
               <Text style={styles.brandModels}>All Models Available</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Services & Facilities</Text>
-          <View style={styles.amenitiesGrid}>
-            <View style={styles.amenityItem}>
-              <Text style={styles.amenityIcon}>🚗</Text>
-              <Text style={styles.amenityText}>Test Drive</Text>
-            </View>
-            <View style={styles.amenityItem}>
-              <Text style={styles.amenityIcon}>🏢</Text>
-              <Text style={styles.amenityText}>Showroom</Text>
-            </View>
-            <View style={styles.amenityItem}>
-              <Text style={styles.amenityIcon}>☕</Text>
-              <Text style={styles.amenityText}>Coffee Bar</Text>
-            </View>
-            <View style={styles.amenityItem}>
-              <Text style={styles.amenityIcon}>📶</Text>
-              <Text style={styles.amenityText}>Free WiFi</Text>
+        {showroom.amenities.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Services & Facilities</Text>
+            <View style={styles.amenitiesGrid}>
+              {showroom.amenities.map((amenity, index) => (
+                <View key={index} style={styles.amenityItem}>
+                  <Text style={styles.amenityIcon}>
+                    {getAmenityIcon(amenity)}
+                  </Text>
+                  <Text style={styles.amenityText}>{amenity}</Text>
+                </View>
+              ))}
             </View>
           </View>
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About This Showroom</Text>
-          <Text style={styles.description}>
-            Experience the future of electric vehicles at our state-of-the-art
-            Tesla Experience Center. Our knowledgeable staff is ready to assist
-            you with test drives, financing options, and answering any questions
-            about Tesla vehicles. Visit us today to explore the full range of
-            Tesla models and customize your next EV.
-          </Text>
-        </View>
+        )}
 
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.callButton}>
-            <Phone size={20} color="#fff" strokeWidth={2} />
-            <Text style={styles.callButtonText}>Call Now</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.directionsButton}>
+          {showroom.operator?.phone && (
+            <TouchableOpacity style={styles.callButton} onPress={handleCall}>
+              <Phone size={20} color="#fff" strokeWidth={2} />
+              <Text style={styles.callButtonText}>Call Now</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.directionsButton}
+            onPress={handleDirections}
+          >
             <MapPin size={20} color="#3b82f6" strokeWidth={2} />
             <Text style={styles.directionsButtonText}>Get Directions</Text>
           </TouchableOpacity>
@@ -165,6 +324,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  center: {
+    justifyContent: "center",
+    alignItems: "center",
   },
   imageContainer: {
     position: "relative",
@@ -180,6 +343,12 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.3)",
     padding: 8,
     borderRadius: 24,
+  },
+  backButtonFixed: {
+    position: "absolute",
+    top: 48,
+    left: 16,
+    padding: 8,
   },
   favoriteButton: {
     position: "absolute",
@@ -360,6 +529,21 @@ const styles = StyleSheet.create({
   directionsButtonText: {
     color: "#3b82f6",
     fontSize: 16,
+    fontWeight: "600",
+  },
+  errorText: {
+    fontSize: 16,
+    color: "#ef4444",
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: "#3b82f6",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+  },
+  retryText: {
+    color: "#fff",
     fontWeight: "600",
   },
 });

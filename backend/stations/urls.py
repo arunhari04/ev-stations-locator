@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     PlaceViewSet, FavoriteViewSet, 
     nearby_places, search_places, filter_places, place_options,
-    map_home, map_place_detail, map_search
+    map_home, map_place_detail, map_search, ShowroomDetailView
 )
 
 router = DefaultRouter()
@@ -19,6 +19,8 @@ urlpatterns = [
     path('places/search/', search_places, name='place_search'),
     path('places/filter/', filter_places, name='place_filter'),
     path('places/options/', place_options, name='place_options'),
+    path('showrooms/<int:pk>/', ShowroomDetailView.as_view(), name='showroom_detail'),
+
     
     # Map APIs
     path('map/home/', map_home, name='map_home'),

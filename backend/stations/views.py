@@ -1,13 +1,19 @@
-from rest_framework import viewsets, permissions, filters, generics
+from rest_framework import viewsets, status, generics, permissions
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes as api_permission_classes, action
-from django.db.models import Q
-from math import radians, cos, sin, asin, sqrt
-from .models import Place, Favorite
-from .serializers import PlaceSerializer, FavoriteSerializer
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly, AllowAny
+from django.db.models import Count, Q, F, FloatField, ExpressionWrapper
+from django.db.models.functions import Cast
+import math
+from math import sin, cos, asin, sqrt, radians
+
+from .models import Place, Favorite, PlaceCharger, ChargerType, Amenity
+from .serializers import (
+    PlaceSerializer, FavoriteSerializer, ShowroomDetailSerializer
+)
 
 def haversine(lon1, lat1, lon2, lat2):
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
     dlon = lon2 - lon1 
     dlat = lat2 - lat1 
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
@@ -281,3 +287,8 @@ class FavoriteViewSet(viewsets.ModelViewSet):
         place_id = request.data.get('place_id')
         Favorite.objects.filter(user=request.user, place_id=place_id).delete()
         return Response(status=204)
+
+class ShowroomDetailView(generics.RetrieveAPIView):
+    queryset = Place.objects.all()
+    serializer_class = ShowroomDetailSerializer
+    permission_classes = [AllowAny]

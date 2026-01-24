@@ -9,7 +9,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter, useFocusEffect } from "expo-router";
-import { Heart, Zap, MapPin } from "lucide-react-native";
+import { Heart, Zap, MapPin, ShoppingBag } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
@@ -110,18 +110,32 @@ export default function FavoritesScreen() {
               style={styles.stationCard}
               onPress={() =>
                 router.push({
-                  pathname: "/details",
+                  pathname:
+                    place.place_type === "SHOWROOM"
+                      ? "/showroom-details"
+                      : "/details",
                   params: { id: place.id },
                 })
               }
             >
               <View style={styles.stationHeader}>
                 <View style={styles.stationIcon}>
-                  <Zap size={24} color="#10b981" strokeWidth={2} />
+                  {place.place_type === "SHOWROOM" ? (
+                    <ShoppingBag size={24} color="#3b82f6" strokeWidth={2} />
+                  ) : (
+                    <Zap size={24} color="#10b981" strokeWidth={2} />
+                  )}
                 </View>
                 <View style={styles.stationInfo}>
                   <Text style={styles.stationName}>{place.name}</Text>
-                  <Text style={styles.stationOperator}>{place.operator}</Text>
+                  <Text
+                    style={[
+                      styles.stationOperator,
+                      place.place_type === "SHOWROOM" && { color: "#3b82f6" },
+                    ]}
+                  >
+                    {place.operator}
+                  </Text>
                   <Text style={styles.stationAddress}>{place.address}</Text>
                 </View>
                 <TouchableOpacity
@@ -161,12 +175,16 @@ export default function FavoritesScreen() {
                     place.status !== "ACTIVE" && {
                       backgroundColor: "#fee2e2",
                     },
+                    place.place_type === "SHOWROOM" && {
+                      backgroundColor: "#eff6ff",
+                    },
                   ]}
                 >
                   <Text
                     style={[
                       styles.availableBadgeText,
                       place.status !== "ACTIVE" && { color: "#ef4444" },
+                      place.place_type === "SHOWROOM" && { color: "#3b82f6" },
                     ]}
                   >
                     {place.available_count

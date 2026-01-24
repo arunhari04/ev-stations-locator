@@ -15,6 +15,7 @@ import {
   MapPin,
   Zap,
   SlidersHorizontal,
+  ShoppingBag,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
@@ -98,20 +99,32 @@ export default function SearchScreen() {
                   style={styles.recentItem}
                   onPress={() =>
                     router.push({
-                      pathname: "/details",
+                      pathname:
+                        station.place_type === "SHOWROOM"
+                          ? "/showroom-details"
+                          : "/details",
                       params: { id: station.id },
                     })
                   }
                 >
-                  <Zap size={20} color="#10b981" strokeWidth={2} />
+                  {station.place_type === "SHOWROOM" ? (
+                    <ShoppingBag size={20} color="#3b82f6" strokeWidth={2} />
+                  ) : (
+                    <Zap size={20} color="#10b981" strokeWidth={2} />
+                  )}
                   <View style={{ flex: 1 }}>
                     <Text style={styles.recentText}>{station.name}</Text>
                     <Text
-                      style={{
-                        fontSize: 13,
-                        color: "#059669",
-                        marginBottom: 2,
-                      }}
+                      style={[
+                        {
+                          fontSize: 13,
+                          color: "#059669",
+                          marginBottom: 2,
+                        },
+                        station.place_type === "SHOWROOM" && {
+                          color: "#3b82f6",
+                        },
+                      ]}
                     >
                       {station.operator}
                     </Text>

@@ -6,7 +6,6 @@ export default function ServicesLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="showrooms" />
       <Stack.Screen name="service-stations" />
-      <Stack.Screen name="battery-shops" />
     </Stack>
   );
 }
