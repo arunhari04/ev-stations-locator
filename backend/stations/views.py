@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes as api_permission_classes, action
 from django.db.models import Q
 from math import radians, cos, sin, asin, sqrt
-from .models import Station, Favorite
-from .serializers import StationSerializer, FavoriteSerializer
+from .models import Place, Favorite
+from .serializers import PlaceSerializer, FavoriteSerializer
 
 def haversine(lon1, lat1, lon2, lat2):
     lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
@@ -17,13 +17,13 @@ def haversine(lon1, lat1, lon2, lat2):
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
-def station_options(request):
+def place_options(request):
     # Get all unique charger types
-    types = list(Station.objects.values_list('station_chargers__charger_type__name', flat=True).distinct())
+    types = list(Place.objects.values_list('place_chargers__charger_type__name', flat=True).distinct())
     unique_types = sorted(list(set([t for t in types if t])))
 
-    # Get all unique amenities
-    amenities = list(Station.objects.values_list('amenities__name', flat=True).distinct())
+    # Get all unique amenities (from M2M)
+    amenities = list(Place.objects.values_list('amenities__name', flat=True).distinct())
     unique_amenities = sorted(list(set([a for a in amenities if a])))
 
     return Response({
@@ -32,17 +32,18 @@ def station_options(request):
     })
 
 
-class StationViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Station.objects.all()
-    serializer_class = StationSerializer
+
+class PlaceViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Place.objects.all()
+    serializer_class = PlaceSerializer
     permission_classes = [permissions.AllowAny]
 
     def get_queryset(self):
-        return Station.objects.all()
+        return Place.objects.all()
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
-def nearby_stations(request):
+def nearby_places(request):
     lat = request.query_params.get('lat') or request.query_params.get('latitude')
     lng = request.query_params.get('lng') or request.query_params.get('longitude')
     dist_param = request.query_params.get('distance', 10) # default 10km
@@ -63,33 +64,33 @@ def nearby_stations(request):
     lng = float(lng)
     limit_km = float(dist_param)
     
-    stations = list(Station.objects.all())
+    places = list(Place.objects.all())
     nearby = []
-    for s in stations:
-        d = haversine(lng, lat, s.longitude, s.latitude)
+    for p in places:
+        d = haversine(lng, lat, p.longitude, p.latitude)
         if d <= limit_km:
-            s.distance = d
-            nearby.append(s)
+            p.distance = d
+            nearby.append(p)
     
     nearby.sort(key=lambda x: x.distance)
-    serializer = StationSerializer(nearby, many=True, context={'request': request})
+    serializer = PlaceSerializer(nearby, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
-def search_stations(request):
+def search_places(request):
     query = request.query_params.get('q') or request.query_params.get('query')
     if not query:
         return Response([])
         
-    stations = Station.objects.filter(name__icontains=query)
-    serializer = StationSerializer(stations, many=True, context={'request': request})
+    places = Place.objects.filter(name__icontains=query)
+    serializer = PlaceSerializer(places, many=True, context={'request': request})
     return Response(serializer.data)
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
-def filter_stations(request):
-    queryset = Station.objects.all().prefetch_related('station_chargers', 'chargers', 'amenities', 'images', 'operator').distinct()
+def filter_places(request):
+    queryset = Place.objects.all().prefetch_related('place_chargers', 'chargers', 'images', 'operator').distinct()
     
     # 1. Availability
     availability = request.query_params.get('availability')
@@ -105,13 +106,13 @@ def filter_stations(request):
         q_objects = Q()
         for rt in requested_types:
             if rt == 'ac':
-                q_objects |= Q(station_chargers__charger_type__name__icontains='AC') | Q(station_chargers__charger_type__name__icontains='Level 2')
+                q_objects |= Q(place_chargers__charger_type__name__icontains='AC') | Q(place_chargers__charger_type__name__icontains='Level 2')
             elif rt == 'dc':
-                q_objects |= Q(station_chargers__charger_type__name__icontains='DC') | Q(station_chargers__charger_type__name__icontains='Fast') | Q(station_chargers__charger_type__name__icontains='CCS')
+                q_objects |= Q(place_chargers__charger_type__name__icontains='DC') | Q(place_chargers__charger_type__name__icontains='Fast') | Q(place_chargers__charger_type__name__icontains='CCS')
             elif rt == 'tesla':
-                q_objects |= Q(station_chargers__charger_type__name__icontains='Tesla') | Q(station_chargers__charger_type__name__icontains='Supercharger')
+                q_objects |= Q(place_chargers__charger_type__name__icontains='Tesla') | Q(place_chargers__charger_type__name__icontains='Supercharger')
             else:
-                q_objects |= Q(station_chargers__charger_type__name__icontains=rt)
+                q_objects |= Q(place_chargers__charger_type__name__icontains=rt)
         
         if q_objects:
             queryset = queryset.filter(q_objects)
@@ -131,12 +132,12 @@ def filter_stations(request):
     price_max = request.query_params.get('price_max')
     
     if price_min:
-        queryset = queryset.filter(station_chargers__start_price__gte=float(price_min))
+        queryset = queryset.filter(place_chargers__start_price__gte=float(price_min))
     if price_max:
-        queryset = queryset.filter(station_chargers__end_price__lte=float(price_max))
+        queryset = queryset.filter(place_chargers__end_price__lte=float(price_max))
 
     # Convert to list for distance calc (cannot easily do geodistance in sqlite ORM without specialized libs)
-    stations = list(queryset.distinct())
+    places = list(queryset.distinct())
 
     # 4. Location & Distance
     lat = request.query_params.get('lat') or request.query_params.get('latitude')
@@ -154,70 +155,70 @@ def filter_stations(request):
         except:
             pass
 
-    filtered_stations = []
+    filtered_places = []
     MILES_TO_KM = 1.60934
 
-    for s in stations:
+    for p in places:
         # Distance Logic
-        s.distance = None
+        p.distance = None
         if lat and lng:
             try:
                 user_lat = float(lat)
                 user_lng = float(lng)
-                kms = haversine(user_lng, user_lat, s.longitude, s.latitude)
+                kms = haversine(user_lng, user_lat, p.longitude, p.latitude)
                 dist_miles = kms / MILES_TO_KM
-                s.distance = dist_miles
+                p.distance = dist_miles
             except (ValueError, TypeError):
                 pass
         
-        if limit_miles is not None and s.distance is not None:
-             if s.distance > limit_miles:
+        if limit_miles is not None and p.distance is not None:
+             if p.distance > limit_miles:
                  continue
         
-        filtered_stations.append(s)
+        filtered_places.append(p)
 
     # 6. Sorting
     sort = request.query_params.get('sort')
     
     if sort == 'nearest':
-        filtered_stations.sort(key=lambda x: x.distance if x.distance is not None else 999999)
+        filtered_places.sort(key=lambda x: x.distance if x.distance is not None else 999999)
     elif sort == 'cheapest':
         # Need to re-calculate min price for sorting since we don't have it annotated yet
-        filtered_stations.sort(key=lambda x: min([c.start_price for c in x.station_chargers.all()] or [999]))
+        filtered_places.sort(key=lambda x: min([c.start_price for c in x.place_chargers.all()] or [999]))
     elif sort == 'fastest':
-        filtered_stations.sort(key=lambda x: max([c.charger_type.max_power_kw for c in x.station_chargers.all()] or [0]), reverse=True)
+        filtered_places.sort(key=lambda x: max([c.charger_type.max_power_kw for c in x.place_chargers.all()] or [0]), reverse=True)
         
-    serializer = StationSerializer(filtered_stations, many=True, context={'request': request})
+    serializer = PlaceSerializer(filtered_places, many=True, context={'request': request})
     return Response(serializer.data)
 
 
 # Map APIs
 from rest_framework import serializers
-class MapStationSerializer(serializers.ModelSerializer):
+class MapPlaceSerializer(serializers.ModelSerializer):
     charger_types = serializers.SerializerMethodField()
 
     class Meta:
-        model = Station
-        fields = ['id', 'name', 'latitude', 'longitude', 'charger_types', 'status']
+        model = Place
+        fields = ['id', 'name', 'latitude', 'longitude', 'charger_types', 'status', 'place_type']
 
     def get_charger_types(self, obj):
-        return list(obj.station_chargers.values_list('charger_type__name', flat=True).distinct())
+        return list(obj.place_chargers.values_list('charger_type__name', flat=True).distinct())
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
 def map_home(request):
-    stations = Station.objects.all()
-    serializer = MapStationSerializer(stations, many=True)
+    places = Place.objects.all()
+    serializer = MapPlaceSerializer(places, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])
 @api_permission_classes([permissions.AllowAny])
-def map_station_detail(request, pk):
+def map_place_detail(request, pk):
     try:
-        station = Station.objects.get(pk=pk)
-    except Station.DoesNotExist:
+        place = Place.objects.get(pk=pk)
+    except Place.DoesNotExist:
         return Response(status=404)
-    serializer = MapStationSerializer(station)
+    serializer = MapPlaceSerializer(place)
     return Response(serializer.data)
 
 @api_view(['GET'])
@@ -226,8 +227,8 @@ def map_search(request):
     query = request.query_params.get('q')
     if not query:
         return Response([])
-    stations = Station.objects.filter(name__icontains=query)
-    serializer = MapStationSerializer(stations, many=True)
+    places = Place.objects.filter(name__icontains=query)
+    serializer = MapPlaceSerializer(places, many=True)
     return Response(serializer.data)
 
 
@@ -261,10 +262,10 @@ class FavoriteViewSet(viewsets.ModelViewSet):
                 user_lng = float(lng)
                 
                 for fav in results:
-                    station = fav.station
-                    d = haversine(user_lng, user_lat, station.longitude, station.latitude)
-                    # Hack: Attach distance to the station instance so serializer finds it
-                    station.distance = d
+                    place = fav.place
+                    d = haversine(user_lng, user_lat, place.longitude, place.latitude)
+                    # Hack: Attach distance to the place instance so serializer finds it
+                    place.distance = d
             except (ValueError, TypeError):
                 pass
 
@@ -277,6 +278,6 @@ class FavoriteViewSet(viewsets.ModelViewSet):
     
     @action(detail=False, methods=['delete'])
     def remove(self, request):
-        station_id = request.data.get('station_id')
-        Favorite.objects.filter(user=request.user, station_id=station_id).delete()
+        place_id = request.data.get('place_id')
+        Favorite.objects.filter(user=request.user, place_id=place_id).delete()
         return Response(status=204)

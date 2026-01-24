@@ -36,7 +36,7 @@ export default function HomeScreen() {
       // Pass map data to WebView
       if (webViewRef.current) {
         webViewRef.current.postMessage(
-          JSON.stringify({ type: "UPDATE_STATIONS", data: mapData })
+          JSON.stringify({ type: "UPDATE_STATIONS", data: mapData }),
         );
       }
 
@@ -48,20 +48,20 @@ export default function HomeScreen() {
               type: "CENTER_MAP",
               lat: location.latitude,
               lng: location.longitude,
-            })
+            }),
           );
           webViewRef.current.postMessage(
             JSON.stringify({
               type: "UPDATE_USER_LOCATION",
               lat: location.latitude,
               lng: location.longitude,
-            })
+            }),
           );
         }
 
-        const nearbyData = await api.getNearbyStations(
+        const nearbyData = await api.getNearbyPlaces(
           location.latitude,
-          location.longitude
+          location.longitude,
         );
         setStations(nearbyData);
         // Map messages moved up
@@ -69,13 +69,13 @@ export default function HomeScreen() {
         // Remove user location marker if location is null
         if (webViewRef.current) {
           webViewRef.current.postMessage(
-            JSON.stringify({ type: "REMOVE_USER_LOCATION" })
+            JSON.stringify({ type: "REMOVE_USER_LOCATION" }),
           );
         }
 
         // Fallback if no location, just list some stations or keep empty?
         // Maybe fetch generic list or use mapData
-        const allStations = await api.getNearbyStations(37.77, -122.41); // Default SF
+        const allStations = await api.getNearbyPlaces(37.77, -122.41); // Default SF
         setStations(allStations);
       }
     } catch (e) {
@@ -135,8 +135,8 @@ export default function HomeScreen() {
       const map = L.map('map', {
         zoomControl: false
       }).setView([${location?.latitude || 37.77}, ${
-    location?.longitude || -122.41
-  }], 13);
+        location?.longitude || -122.41
+      }], 13);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
@@ -237,7 +237,7 @@ export default function HomeScreen() {
     // Send initial data if available
     if (mapStations.length > 0 && webViewRef.current) {
       webViewRef.current.postMessage(
-        JSON.stringify({ type: "UPDATE_STATIONS", data: mapStations })
+        JSON.stringify({ type: "UPDATE_STATIONS", data: mapStations }),
       );
     }
     if (location && webViewRef.current) {
@@ -246,7 +246,7 @@ export default function HomeScreen() {
           type: "UPDATE_USER_LOCATION",
           lat: location.latitude,
           lng: location.longitude,
-        })
+        }),
       );
     }
   };
@@ -272,7 +272,7 @@ export default function HomeScreen() {
                   type: "CENTER_MAP",
                   lat: loc.latitude,
                   lng: loc.longitude,
-                })
+                }),
               );
               // Also update user marker
               webViewRef.current.postMessage(
@@ -280,7 +280,7 @@ export default function HomeScreen() {
                   type: "UPDATE_USER_LOCATION",
                   lat: loc.latitude,
                   lng: loc.longitude,
-                })
+                }),
               );
             }
           }}

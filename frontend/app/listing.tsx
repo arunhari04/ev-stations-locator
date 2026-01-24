@@ -31,17 +31,17 @@ export default function ListingScreen() {
       // Check if we have filter params
       if (Object.keys(params).length > 0 && !params.id) {
         // params.id excludes if we just navigated with an id (not likely here but safe check)
-        const data = await api.filterStations(params);
+        const data = await api.filterPlaces(params);
         setStations(data);
       } else if (location) {
-        const data = await api.getNearbyStations(
+        const data = await api.getNearbyPlaces(
           location.latitude,
-          location.longitude
+          location.longitude,
         );
         setStations(data);
       } else {
         // Fallback
-        const data = await api.getNearbyStations(37.77, -122.41);
+        const data = await api.getNearbyPlaces(37.77, -122.41);
         setStations(data);
       }
     } catch (e) {
@@ -172,13 +172,13 @@ export default function ListingScreen() {
                     {station.distance
                       ? station.distance.toFixed(1) + " mi"
                       : location
-                      ? calculateDistance(
-                          location.latitude,
-                          location.longitude,
-                          station.latitude,
-                          station.longitude
-                        ).toFixed(1) + " mi"
-                      : "N/A"}
+                        ? calculateDistance(
+                            location.latitude,
+                            location.longitude,
+                            station.latitude,
+                            station.longitude,
+                          ).toFixed(1) + " mi"
+                        : "N/A"}
                   </Text>
                 </View>
                 <Text style={styles.priceText}>{station.price}</Text>

@@ -42,9 +42,9 @@ export default function DetailsScreen() {
     }
   }, [id]);
 
-  const fetchDetails = async (stationId: number) => {
+  const fetchDetails = async (placeId: number) => {
     try {
-      const data = await api.getStationDetails(stationId);
+      const data = await api.getPlaceDetails(placeId);
       setStation(data);
       setFavorite(data.is_favorite);
     } catch (e) {
@@ -72,7 +72,7 @@ export default function DetailsScreen() {
     router.push({
       pathname: "/navigation",
       params: {
-        stationId: station.id,
+        placeId: station.id,
         lat: station.latitude,
         lng: station.longitude,
         name: station.name,
@@ -160,13 +160,13 @@ export default function DetailsScreen() {
               {station.distance
                 ? station.distance.toFixed(1)
                 : location
-                ? calculateDistance(
-                    location.latitude,
-                    location.longitude,
-                    station.latitude,
-                    station.longitude
-                  ).toFixed(1)
-                : "-"}
+                  ? calculateDistance(
+                      location.latitude,
+                      location.longitude,
+                      station.latitude,
+                      station.longitude,
+                    ).toFixed(1)
+                  : "-"}
             </Text>
             <Text style={styles.statLabel}>km away</Text>
           </View>

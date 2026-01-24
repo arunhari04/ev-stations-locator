@@ -31,7 +31,7 @@ export default function FavoritesScreen() {
       // Pass location if available
       const data = await api.getFavorites(
         location?.latitude,
-        location?.longitude
+        location?.longitude,
       );
       setFavorites(data);
     } catch (e) {
@@ -42,13 +42,13 @@ export default function FavoritesScreen() {
     }
   };
 
-  const handleRemoveFavorite = async (stationId: number) => {
+  const handleRemoveFavorite = async (placeId: number) => {
     try {
       // Optimistic update
       setFavorites((prev) =>
-        prev.filter((item: any) => item.station.id !== stationId)
+        prev.filter((item: any) => item.place.id !== placeId),
       );
-      await api.removeFavorite(stationId);
+      await api.removeFavorite(placeId);
     } catch (e) {
       console.error("Failed to remove favorite", e);
       // Revert if needed, but for now simple log
@@ -60,7 +60,7 @@ export default function FavoritesScreen() {
     useCallback(() => {
       setLoading(true);
       fetchFavorites();
-    }, [])
+    }, []),
   );
 
   const onRefresh = () => {
@@ -101,8 +101,8 @@ export default function FavoritesScreen() {
           </View>
         )}
         {favorites.map((item: any) => {
-          const station = item.station;
-          if (!station) return null; // Safety check
+          const place = item.place;
+          if (!place) return null; // Safety check
 
           return (
             <TouchableOpacity
@@ -111,7 +111,7 @@ export default function FavoritesScreen() {
               onPress={() =>
                 router.push({
                   pathname: "/details",
-                  params: { id: station.id },
+                  params: { id: place.id },
                 })
               }
             >
@@ -120,14 +120,14 @@ export default function FavoritesScreen() {
                   <Zap size={24} color="#10b981" strokeWidth={2} />
                 </View>
                 <View style={styles.stationInfo}>
-                  <Text style={styles.stationName}>{station.name}</Text>
-                  <Text style={styles.stationOperator}>{station.operator}</Text>
-                  <Text style={styles.stationAddress}>{station.address}</Text>
+                  <Text style={styles.stationName}>{place.name}</Text>
+                  <Text style={styles.stationOperator}>{place.operator}</Text>
+                  <Text style={styles.stationAddress}>{place.address}</Text>
                 </View>
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation(); // Prevent card press
-                    handleRemoveFavorite(station.id);
+                    handleRemoveFavorite(place.id);
                   }}
                 >
                   <Heart
@@ -143,22 +143,22 @@ export default function FavoritesScreen() {
                 <View style={styles.detailItem}>
                   <MapPin size={16} color="#9ca3af" strokeWidth={2} />
                   <Text style={styles.detailText}>
-                    {station.distance
-                      ? station.distance.toFixed(1) + " mi"
+                    {place.distance
+                      ? place.distance.toFixed(1) + " mi"
                       : location
-                      ? calculateDistance(
-                          location.latitude,
-                          location.longitude,
-                          station.latitude,
-                          station.longitude
-                        ).toFixed(1) + " mi"
-                      : "N/A"}
+                        ? calculateDistance(
+                            location.latitude,
+                            location.longitude,
+                            place.latitude,
+                            place.longitude,
+                          ).toFixed(1) + " mi"
+                        : "N/A"}
                   </Text>
                 </View>
                 <View
                   style={[
                     styles.availableBadge,
-                    station.status !== "ACTIVE" && {
+                    place.status !== "ACTIVE" && {
                       backgroundColor: "#fee2e2",
                     },
                   ]}
@@ -166,17 +166,17 @@ export default function FavoritesScreen() {
                   <Text
                     style={[
                       styles.availableBadgeText,
-                      station.status !== "ACTIVE" && { color: "#ef4444" },
+                      place.status !== "ACTIVE" && { color: "#ef4444" },
                     ]}
                   >
-                    {station.available_count
-                      ? `${station.available_count} available`
-                      : station.status === "ACTIVE"
-                      ? "Available"
-                      : "Busy"}
+                    {place.available_count
+                      ? `${place.available_count} available`
+                      : place.status === "ACTIVE"
+                        ? "Available"
+                        : "Busy"}
                   </Text>
                 </View>
-                <Text style={styles.stationPrice}>{station.price}</Text>
+                <Text style={styles.stationPrice}>{place.price}</Text>
               </View>
             </TouchableOpacity>
           );

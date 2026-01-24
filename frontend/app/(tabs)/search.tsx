@@ -38,7 +38,7 @@ export default function SearchScreen() {
   const handleSearch = async (query: string) => {
     setLoading(true);
     try {
-      const data = await api.searchStations(query);
+      const data = await api.searchPlaces(query);
       setResults(data);
     } catch (e) {
       console.error(e);

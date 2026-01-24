@@ -18,13 +18,13 @@ export default function FiltersScreen() {
 
   // Dynamic Options from Backend
   const [availableChargerTypes, setAvailableChargerTypes] = useState<string[]>(
-    []
+    [],
   );
   const [availableAmenities, setAvailableAmenities] = useState<string[]>([]);
 
   // Selections
   const [selectedChargerTypes, setSelectedChargerTypes] = useState<string[]>(
-    []
+    [],
   );
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
@@ -39,7 +39,7 @@ export default function FiltersScreen() {
 
   const fetchOptions = async () => {
     try {
-      const data = await api.getStationOptions();
+      const data = await api.getPlaceOptions();
       setAvailableChargerTypes(data.charger_types || []);
       setAvailableAmenities(data.amenities || []);
     } catch (e) {

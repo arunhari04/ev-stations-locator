@@ -2,8 +2,22 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Adjust this if testing on Android Emulator (10.0.2.2) vs Physical Device (LAN IP)
-// The user provided IP: 10.189.164.117 (Old), Detected: 10.43.173.117
-const API_BASE_URL = 'http://192.168.43.122:8000/api';
+import Constants from 'expo-constants';
+
+const getBaseUrl = () => {
+  // Try to get the machine's IP from the Expo packager
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  const localhost = debuggerHost?.split(':')[0];
+
+  if (localhost) {
+    return `http://${localhost}:8000/api`;
+  }
+
+  // Fallback if detection fails
+  return 'http://192.168.43.122:8000/api';
+};
+
+const API_BASE_URL = getBaseUrl();
 
 const getHeaders = async () => {
   const token = await AsyncStorage.getItem('auth_token');
@@ -89,43 +103,43 @@ export const api = {
     return null;
   },
 
-  // --- STATIONS ---
-  getNearbyStations: async (lat: number, lng: number, distance = 10) => {
+  // --- PLACES ---
+  getNearbyPlaces: async (lat: number, lng: number, distance = 10) => {
     // Public endpoint typically, but can be auth'd
-    const response = await fetch(`${API_BASE_URL}/stations/nearby/?lat=${lat}&lng=${lng}&distance=${distance}`);
+    const response = await fetch(`${API_BASE_URL}/places/nearby/?lat=${lat}&lng=${lng}&distance=${distance}`);
     if (!response.ok) return [];
     return response.json();
   },
 
-  getStationDetails: async (id: number) => {
+  getPlaceDetails: async (id: number) => {
     const headers = await getHeaders(); 
-    let response = await fetch(`${API_BASE_URL}/stations/${id}/`, { headers });
+    let response = await fetch(`${API_BASE_URL}/places/${id}/`, { headers });
     
     // If unauthorized (stale token), retry without headers
     if (response.status === 401) {
-       response = await fetch(`${API_BASE_URL}/stations/${id}/`);
+       response = await fetch(`${API_BASE_URL}/places/${id}/`);
     }
 
-    if (!response.ok) throw new Error('Failed to load station');
+    if (!response.ok) throw new Error('Failed to load place');
     return response.json();
   },
 
-  searchStations: async (query: string) => {
-    const response = await fetch(`${API_BASE_URL}/stations/search/?q=${encodeURIComponent(query)}`);
+  searchPlaces: async (query: string) => {
+    const response = await fetch(`${API_BASE_URL}/places/search/?q=${encodeURIComponent(query)}`);
     if (!response.ok) return [];
     return response.json();
   },
   
-  filterStations: async (params: any) => {
+  filterPlaces: async (params: any) => {
       // Assemble query string
       const queryString = new URLSearchParams(params).toString();
-      const response = await fetch(`${API_BASE_URL}/stations/filter/?${queryString}`);
+      const response = await fetch(`${API_BASE_URL}/places/filter/?${queryString}`);
       if (!response.ok) return [];
       return response.json();
   },
 
-  getStationOptions: async () => {
-    const response = await fetch(`${API_BASE_URL}/stations/options/`);
+  getPlaceOptions: async () => {
+    const response = await fetch(`${API_BASE_URL}/places/options/`);
     if (!response.ok) return { charger_types: [], amenities: [] };
     return response.json();
   },
@@ -137,8 +151,8 @@ export const api = {
     return response.json();
   },
 
-  getMapStation: async (id: number) => {
-    const response = await fetch(`${API_BASE_URL}/map/station/${id}/`);
+  getMapPlace: async (id: number) => {
+    const response = await fetch(`${API_BASE_URL}/map/place/${id}/`);
     if (!response.ok) return null;
     return response.json();
   },
@@ -158,7 +172,7 @@ export const api = {
     return response.json();
   },
 
-  addFavorite: async (stationId: number) => {
+  addFavorite: async (placeId: number) => {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) return;
 
@@ -166,11 +180,11 @@ export const api = {
     await fetch(`${API_BASE_URL}/favorites/add/`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ station_id: stationId }),
+      body: JSON.stringify({ place_id: placeId }),
     });
   },
 
-  removeFavorite: async (stationId: number) => {
+  removeFavorite: async (placeId: number) => {
     const token = await AsyncStorage.getItem('auth_token');
     if (!token) return;
 
@@ -178,7 +192,7 @@ export const api = {
     await fetch(`${API_BASE_URL}/favorites/remove/`, {
       method: 'DELETE',
       headers,
-      body: JSON.stringify({ station_id: stationId }),
+      body: JSON.stringify({ place_id: placeId }),
     });
   },
 };
