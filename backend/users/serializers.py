@@ -1,15 +1,65 @@
 from rest_framework import serializers
-from .models import User
+from .models import User, UserProfile, UserPreferences, UserNotificationSettings
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['profile_image', 'phone_number']
+
+class UserPreferencesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserPreferences
+        fields = ['is_dark_mode', 'allow_location_tracking']
+
+class NotificationSettingsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserNotificationSettings
+        fields = ['notify_charging_updates', 'notify_station_alerts', 'notify_promotional_offers', 'notify_app_updates']
 
 class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer()
+    preferences = UserPreferencesSerializer()
+    notifications = NotificationSettingsSerializer()
+    
     current_latitude = serializers.SerializerMethodField()
     current_longitude = serializers.SerializerMethodField()
     last_location_update = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile_image', 'phone_number', 'is_dark_mode', 'allow_location_tracking', 'current_latitude', 'current_longitude', 'last_location_update']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile', 'preferences', 'notifications', 'current_latitude', 'current_longitude', 'last_location_update']
         read_only_fields = ['last_location_update']
+
+    def update(self, instance, validated_data):
+        # Handle Nested Updates
+        profile_data = validated_data.pop('profile', None)
+        preferences_data = validated_data.pop('preferences', None)
+        notifications_data = validated_data.pop('notifications', None)
+
+        # Update User fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Update Profile
+        if profile_data:
+            for attr, value in profile_data.items():
+                setattr(instance.profile, attr, value)
+            instance.profile.save()
+
+        # Update Preferences
+        if preferences_data:
+            for attr, value in preferences_data.items():
+                setattr(instance.preferences, attr, value)
+            instance.preferences.save()
+
+        # Update Notifications
+        if notifications_data:
+            for attr, value in notifications_data.items():
+                setattr(instance.notifications, attr, value)
+            instance.notifications.save()
+
+        return instance
 
     def get_current_latitude(self, obj):
         if hasattr(obj, 'userlocation'):
@@ -60,14 +110,22 @@ class RegisterSerializer(serializers.ModelSerializer):
         import uuid
         username = f"user_{uuid.uuid4().hex[:12]}"
 
+        phone_number = validated_data.get('phone_number', '')
+
         user = User.objects.create_user(
             username=username,
             email=email,
             password=validated_data['password'],
             first_name=first_name,
             last_name=last_name,
-            phone_number=validated_data.get('phone_number', '')
         )
+        
+        # Save phone number to profile
+        if phone_number:
+            # Signal should have created the profile
+            user.profile.phone_number = phone_number
+            user.profile.save()
+            
         return user
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
@@ -115,7 +173,7 @@ class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
                 'username': user.username,
                 'first_name': user.first_name,
                 'last_name': user.last_name,
-                'phone_number': user.phone_number,
+                'phone_number': getattr(user.profile, 'phone_number', '') if hasattr(user, 'profile') else '',
             }
         }
 

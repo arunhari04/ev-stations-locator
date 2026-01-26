@@ -32,16 +32,18 @@ export default function SettingsScreen() {
   const { theme, toggleTheme, colors } = useTheme();
 
   // Local state initialized from user context
-  const [darkMode, setDarkMode] = useState(user?.is_dark_mode || false);
+  const [darkMode, setDarkMode] = useState(
+    user?.preferences?.is_dark_mode || false,
+  );
   const [locationEnabled, setLocationEnabled] = useState(
-    user?.allow_location_tracking ?? true,
+    user?.preferences?.allow_location_tracking ?? true,
   );
 
   // Sync local state when user updates (e.g. after refresh)
   useEffect(() => {
-    if (user) {
-      setDarkMode(user.is_dark_mode);
-      setLocationEnabled(user.allow_location_tracking);
+    if (user && user.preferences) {
+      setDarkMode(user.preferences.is_dark_mode);
+      setLocationEnabled(user.preferences.allow_location_tracking);
     }
   }, [user]);
 
@@ -71,7 +73,8 @@ export default function SettingsScreen() {
     setter(value);
 
     try {
-      await api.updateProfile({ [key]: value });
+      // Send nested update
+      await api.updateProfile({ preferences: { [key]: value } });
       await refreshUser();
     } catch (error) {
       // Revert on failure

@@ -47,8 +47,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
-    if (user) {
-      setTheme(user.is_dark_mode ? "dark" : "light");
+    if (user && user.preferences) {
+      setTheme(user.preferences.is_dark_mode ? "dark" : "light");
     }
   }, [user]);
 

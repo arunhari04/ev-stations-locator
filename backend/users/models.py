@@ -12,16 +12,39 @@ class UserLocation(models.Model):
 
 class User(AbstractUser):
     email = models.EmailField(unique=True)
-    profile_image = models.URLField(blank=True, null=True)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
-    
-    # User Preferences
-    is_dark_mode = models.BooleanField(default=False)
-    allow_location_tracking = models.BooleanField(default=True)
-    
-    # Favorites will be a reverse relation from FavoriteStation model, 
-    # but we can add a helper or M2M if needed later. 
-    # For now, keeping it simple.
 
     def __str__(self):
         return self.username
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    profile_image = models.URLField(blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} Profile"
+
+
+class UserPreferences(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="preferences")
+
+    # User Preferences
+    is_dark_mode = models.BooleanField(default=False)
+    allow_location_tracking = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.username} Preferences"
+
+
+class UserNotificationSettings(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="notifications")
+
+    # Notification Settings
+    notify_charging_updates = models.BooleanField(default=True)
+    notify_station_alerts = models.BooleanField(default=True)
+    notify_promotional_offers = models.BooleanField(default=False)
+    notify_app_updates = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"{self.user.username} Notifications"

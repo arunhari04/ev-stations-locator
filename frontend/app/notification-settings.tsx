@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,22 +7,95 @@ import {
   Switch,
   ScrollView,
   Platform,
+  ActivityIndicator,
+  Modal,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowLeft, Zap, MapPin, Percent, Info } from "lucide-react-native";
+import {
+  ArrowLeft,
+  Zap,
+  MapPin,
+  Percent,
+  Info,
+  CheckCircle,
+  XCircle,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { useTheme } from "../context/ThemeContext";
+import { api } from "../services/api";
 
 export default function NotificationSettingsScreen() {
   const router = useRouter();
   const { colors, theme } = useTheme();
 
-  // Mock Settings States
+  // Settings States
   const [chargingUpdates, setChargingUpdates] = useState(true);
   const [stationAlerts, setStationAlerts] = useState(true);
   const [offers, setOffers] = useState(false);
   const [appUpdates, setAppUpdates] = useState(true);
+
+  const [amountLoading, setInitialLoading] = useState(true);
+  const [toast, setToast] = useState<{
+    visible: boolean;
+    message: string;
+    type: "success" | "error";
+  }>({
+    visible: false,
+    message: "",
+    type: "success",
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    try {
+      const user = await api.getProfile();
+      // Ensure we safely access nested properties with defaults
+      setChargingUpdates(user.notifications?.notify_charging_updates ?? true);
+      setStationAlerts(user.notifications?.notify_station_alerts ?? true);
+      setOffers(user.notifications?.notify_promotional_offers ?? false);
+      setAppUpdates(user.notifications?.notify_app_updates ?? true);
+    } catch (error) {
+      console.error("Failed to fetch settings", error);
+      showToast("Failed to load settings", "error");
+    } finally {
+      setInitialLoading(false);
+    }
+  };
+
+  const showToast = (
+    message: string,
+    type: "success" | "error" = "success",
+  ) => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => {
+      setToast((current) => ({ ...current, visible: false }));
+    }, 3000);
+  };
+
+  const handleToggle = async (
+    key: string,
+    value: boolean,
+    setter: (val: boolean) => void,
+  ) => {
+    // Optimistic update
+    setter(value);
+
+    try {
+      // Nested Payload
+      const payload = { notifications: { [key]: value } };
+      await api.updateProfile(payload);
+      showToast("Setting updated successfully");
+    } catch (error) {
+      console.error(`Failed to update ${key}`, error);
+      // Revert on error
+      setter(!value);
+      showToast("Failed to update setting", "error");
+    }
+  };
 
   interface ToggleItemProps {
     icon: any;
@@ -31,6 +104,7 @@ export default function NotificationSettingsScreen() {
     value: boolean;
     onToggle: (val: boolean) => void;
     color: string;
+    settingKey: string;
   }
 
   const ToggleItem = ({
@@ -40,6 +114,7 @@ export default function NotificationSettingsScreen() {
     value,
     onToggle,
     color,
+    settingKey,
   }: ToggleItemProps) => (
     <View style={styles.itemContainer}>
       <View style={styles.itemTop}>
@@ -59,7 +134,7 @@ export default function NotificationSettingsScreen() {
         <Switch
           trackColor={{ false: "#d1d5db", true: "#10b981" }}
           thumbColor={"#fff"}
-          onValueChange={onToggle}
+          onValueChange={(val) => handleToggle(settingKey, val, onToggle)}
           value={value}
         />
       </View>
@@ -83,53 +158,90 @@ export default function NotificationSettingsScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      <ScrollView style={styles.content}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          Manage Preferences
-        </Text>
-        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
-          Control which notifications you want to receive directly to your
-          device.
-        </Text>
-
-        <View style={[styles.card, { backgroundColor: colors.card }]}>
-          <ToggleItem
-            icon={Percent}
-            label="Charging Updates"
-            description="Get notified when your vehicle charging is complete or interrupted."
-            value={chargingUpdates}
-            onToggle={setChargingUpdates}
-            color="#10b981"
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <ToggleItem
-            icon={MapPin}
-            label="New Stations"
-            description="Alerts when new charging stations are added near you."
-            value={stationAlerts}
-            onToggle={setStationAlerts}
-            color="#3b82f6"
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <ToggleItem
-            icon={Zap}
-            label="Promotional Offers"
-            description="Discounts and special offers from charging partners."
-            value={offers}
-            onToggle={setOffers}
-            color="#f59e0b"
-          />
-          <View style={[styles.divider, { backgroundColor: colors.border }]} />
-          <ToggleItem
-            icon={Info}
-            label="App Updates & Info"
-            description="Important system updates and maintenance schedules."
-            value={appUpdates}
-            onToggle={setAppUpdates}
-            color="#6b7280"
-          />
+      {amountLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#10b981" />
         </View>
-      </ScrollView>
+      ) : (
+        <ScrollView style={styles.content}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Manage Preferences
+          </Text>
+          <Text
+            style={[styles.sectionSubtitle, { color: colors.textSecondary }]}
+          >
+            Control which notifications you want to receive directly to your
+            device.
+          </Text>
+
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
+            <ToggleItem
+              icon={Percent}
+              label="Charging Updates"
+              description="Get notified when your vehicle charging is complete or interrupted."
+              value={chargingUpdates}
+              onToggle={setChargingUpdates}
+              color="#10b981"
+              settingKey="notify_charging_updates"
+            />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
+            <ToggleItem
+              icon={MapPin}
+              label="New Stations"
+              description="Alerts when new charging stations are added near you."
+              value={stationAlerts}
+              onToggle={setStationAlerts}
+              color="#3b82f6"
+              settingKey="notify_station_alerts"
+            />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
+            <ToggleItem
+              icon={Zap}
+              label="Promotional Offers"
+              description="Discounts and special offers from charging partners."
+              value={offers}
+              onToggle={setOffers}
+              color="#f59e0b"
+              settingKey="notify_promotional_offers"
+            />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
+            <ToggleItem
+              icon={Info}
+              label="App Updates & Info"
+              description="Important system updates and maintenance schedules."
+              value={appUpdates}
+              onToggle={setAppUpdates}
+              color="#6b7280"
+              settingKey="notify_app_updates"
+            />
+          </View>
+        </ScrollView>
+      )}
+
+      {/* Custom Toast Popup */}
+      {toast.visible && (
+        <View style={styles.toastContainer}>
+          <View
+            style={[
+              styles.toast,
+              toast.type === "error" ? styles.toastError : styles.toastSuccess,
+            ]}
+          >
+            {toast.type === "success" ? (
+              <CheckCircle size={20} color="#fff" style={{ marginRight: 8 }} />
+            ) : (
+              <XCircle size={20} color="#fff" style={{ marginRight: 8 }} />
+            )}
+            <Text style={styles.toastText}>{toast.message}</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -140,6 +252,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
+    zIndex: 1,
   },
   safeArea: { paddingTop: Platform.OS === "android" ? 40 : 0 },
   headerContent: {
@@ -155,6 +268,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   content: { padding: 20 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
@@ -200,4 +314,38 @@ const styles = StyleSheet.create({
   },
   itemDesc: { fontSize: 13, lineHeight: 18 },
   divider: { height: 1, marginVertical: 8 },
+  toastContainer: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+    zIndex: 100,
+  },
+  toast: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 30,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  toastSuccess: {
+    backgroundColor: "#10b981",
+  },
+  toastError: {
+    backgroundColor: "#ef4444",
+  },
+  toastText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 14,
+  },
 });

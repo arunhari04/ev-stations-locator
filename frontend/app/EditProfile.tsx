@@ -46,7 +46,7 @@ export default function EditProfileScreen() {
         firstName: user.first_name || "",
         lastName: user.last_name || "",
         email: user.email || "",
-        phone: user.phone_number || "",
+        phone: user.profile?.phone_number || "",
       });
     } catch (error) {
       Alert.alert("Error", "Failed to load profile");
@@ -58,10 +58,13 @@ export default function EditProfileScreen() {
   const handleSave = async () => {
     try {
       setLoading(true);
+      // Prepare payload: direct fields for user, nested for profile
       const payload = {
         first_name: form.firstName,
         last_name: form.lastName,
-        phone_number: form.phone,
+        profile: {
+          phone_number: form.phone,
+        },
       };
       await api.updateProfile(payload);
       await refreshUser(); // Refresh global user state
