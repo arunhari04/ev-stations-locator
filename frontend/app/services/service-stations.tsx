@@ -22,10 +22,12 @@ import {
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { calculateDistance } from "@/utils/distance";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function ServiceStationsScreen() {
   const router = useRouter();
   const { location } = useAuth();
+  const { colors, theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [stations, setStations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,34 +62,46 @@ export default function ServiceStationsScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color="#6b7280" strokeWidth={2} />
+          <ChevronLeft size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.title}>Service Stations</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Service Stations
+        </Text>
         <TouchableOpacity>
-          <List size={24} color="#6b7280" strokeWidth={2} />
+          <List size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#9ca3af" strokeWidth={2} />
+      <View
+        style={[
+          styles.searchContainer,
+          { backgroundColor: theme === "dark" ? "#374151" : "#f9fafb" },
+        ]}
+      >
+        <Search size={20} color={colors.textSecondary} strokeWidth={2} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search service stations..."
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
-      <View style={styles.listContainer}>
+      <View
+        style={[styles.listContainer, { backgroundColor: colors.background }]}
+      >
         <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Nearby Service Centers</Text>
-          <Text style={styles.resultCount}>
+          <Text style={[styles.listTitle, { color: colors.text }]}>
+            Nearby Service Centers
+          </Text>
+          <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
             {filteredStations.length} results
           </Text>
         </View>
@@ -105,7 +119,7 @@ export default function ServiceStationsScreen() {
             {filteredStations.map((station) => (
               <TouchableOpacity
                 key={station.id}
-                style={styles.stationCard}
+                style={[styles.stationCard, { backgroundColor: colors.card }]}
                 onPress={() =>
                   router.push(`/service-station-details?id=${station.id}`)
                 }
@@ -122,7 +136,11 @@ export default function ServiceStationsScreen() {
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
                     <View style={styles.cardTitle}>
-                      <Text style={styles.stationName}>{station.name}</Text>
+                      <Text
+                        style={[styles.stationName, { color: colors.text }]}
+                      >
+                        {station.name}
+                      </Text>
                       <View
                         style={{
                           flexDirection: "row",
@@ -132,7 +150,9 @@ export default function ServiceStationsScreen() {
                         }}
                       >
                         <Wrench size={14} color="#f59e0b" />
-                        <Text style={{ fontSize: 13, color: "#6b7280" }}>
+                        <Text
+                          style={{ fontSize: 13, color: colors.textSecondary }}
+                        >
                           Service Center
                         </Text>
                       </View>
@@ -153,8 +173,18 @@ export default function ServiceStationsScreen() {
 
                   <View style={styles.cardDetails}>
                     <View style={styles.detailRow}>
-                      <MapPin size={16} color="#6b7280" strokeWidth={2} />
-                      <Text style={styles.detailText} numberOfLines={1}>
+                      <MapPin
+                        size={16}
+                        color={colors.textSecondary}
+                        strokeWidth={2}
+                      />
+                      <Text
+                        style={[
+                          styles.detailText,
+                          { color: colors.textSecondary },
+                        ]}
+                        numberOfLines={1}
+                      >
                         {station.address}
                       </Text>
                     </View>
@@ -170,8 +200,14 @@ export default function ServiceStationsScreen() {
                   {/* Removed Services list and Rating as per request to remove mocked data */}
 
                   <View style={styles.hoursRow}>
-                    <Clock size={14} color="#9ca3af" strokeWidth={2} />
-                    <Text style={styles.hours}>
+                    <Clock
+                      size={14}
+                      color={colors.textSecondary}
+                      strokeWidth={2}
+                    />
+                    <Text
+                      style={[styles.hours, { color: colors.textSecondary }]}
+                    >
                       {station.opening_hours ||
                         (station.status === "ACTIVE" ? "Open" : station.status)}
                     </Text>
@@ -189,7 +225,6 @@ export default function ServiceStationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -199,7 +234,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   backButton: {
     padding: 8,
@@ -207,7 +241,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
   },
   searchContainer: {
     flexDirection: "row",
@@ -216,13 +249,11 @@ const styles = StyleSheet.create({
     margin: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#f9fafb",
     borderRadius: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#374151",
   },
   mapContainer: {
     height: 200,
@@ -244,7 +275,6 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flex: 1,
-    backgroundColor: "#f9fafb",
   },
   listHeader: {
     flexDirection: "row",
@@ -256,11 +286,9 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
   },
   resultCount: {
     fontSize: 14,
-    color: "#6b7280",
   },
   stationList: {
     flex: 1,
@@ -270,7 +298,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   stationCard: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 12,
     overflow: "hidden",
@@ -299,7 +326,6 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   ratingContainer: {
@@ -332,7 +358,6 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: "#6b7280",
   },
   servicesContainer: {
     flexDirection: "row",
@@ -358,6 +383,5 @@ const styles = StyleSheet.create({
   },
   hours: {
     fontSize: 12,
-    color: "#9ca3af",
   },
 });

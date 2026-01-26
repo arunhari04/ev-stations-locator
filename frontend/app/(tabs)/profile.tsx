@@ -21,6 +21,7 @@ import {
   Zap,
 } from "lucide-react-native";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 
 // Revised menu specific to Discovery & Services
 const MENU_ITEMS = [
@@ -50,6 +51,7 @@ const MENU_ITEMS = [
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { colors, theme } = useTheme();
 
   const handleLogout = async () => {
     await signOut();
@@ -58,7 +60,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: 40 }}
     >
@@ -82,7 +84,7 @@ export default function ProfileScreen() {
 
           <View style={styles.profileInfo}>
             <View style={styles.avatarContainer}>
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: colors.card }]}>
                 {user?.profile_image ? (
                   <Image
                     source={{ uri: user.profile_image }}
@@ -115,21 +117,38 @@ export default function ProfileScreen() {
         {/* Useful for filtering nearby stations by plug type */}
         {/* NEW: Services Option */}
         <TouchableOpacity
-          style={styles.vehicleCard}
+          style={[styles.vehicleCard, { backgroundColor: colors.card }]}
           onPress={() => router.push("/services")}
         >
           <View style={styles.vehicleHeader}>
-            <View style={styles.vehicleIconBg}>
+            <View
+              style={[
+                styles.vehicleIconBg,
+                { backgroundColor: theme === "dark" ? "#064e3b" : "#f0fdf4" },
+              ]}
+            >
               <Zap size={24} color="#10b981" />
             </View>
             <View>
-              <Text style={styles.vehicleTitle}>EV Services</Text>
-              <Text style={styles.vehicleSubtitle}>
+              <Text style={[styles.vehicleTitle, { color: colors.text }]}>
+                EV Services
+              </Text>
+              <Text
+                style={[
+                  styles.vehicleSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 Find showrooms & service centers
               </Text>
             </View>
           </View>
-          <View style={styles.addVehicleBtn}>
+          <View
+            style={[
+              styles.addVehicleBtn,
+              { backgroundColor: theme === "dark" ? "#064e3b" : "#f0fdf4" },
+            ]}
+          >
             <ChevronRight size={20} color="#059669" />
           </View>
         </TouchableOpacity>
@@ -139,7 +158,13 @@ export default function ProfileScreen() {
           {MENU_ITEMS.map((item, index) => (
             <TouchableOpacity
               key={index}
-              style={styles.menuItem}
+              style={[
+                styles.menuItem,
+                {
+                  backgroundColor: colors.card,
+                  shadowOpacity: theme === "dark" ? 0.3 : 0.03,
+                },
+              ]}
               onPress={() => item.route && router.push(item.route as any)}
             >
               <View
@@ -151,16 +176,29 @@ export default function ProfileScreen() {
                 <item.icon size={22} color={item.color} strokeWidth={2} />
               </View>
               <View style={styles.menuTextContainer}>
-                <Text style={styles.menuLabel}>{item.label}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
+                <Text style={[styles.menuLabel, { color: colors.text }]}>
+                  {item.label}
+                </Text>
+                <Text
+                  style={[styles.menuSubtitle, { color: colors.textSecondary }]}
+                >
+                  {item.subtitle}
+                </Text>
               </View>
-              <ChevronRight size={20} color="#d1d5db" />
+              <ChevronRight size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
 
           {/* Sign Out Button */}
           <TouchableOpacity
-            style={[styles.menuItem, styles.signOutItem]}
+            style={[
+              styles.menuItem,
+              styles.signOutItem,
+              {
+                backgroundColor: colors.card,
+                shadowOpacity: theme === "dark" ? 0.3 : 0.03,
+              },
+            ]}
             onPress={handleLogout}
           >
             <View style={[styles.menuIcon, { backgroundColor: "#fee2e2" }]}>
@@ -176,7 +214,9 @@ export default function ProfileScreen() {
 
         {/* Footer Info */}
         <View style={styles.footer}>
-          <Text style={styles.versionText}>Version 1.0.0</Text>
+          <Text style={[styles.versionText, { color: colors.textSecondary }]}>
+            Version 1.0.0
+          </Text>
         </View>
       </View>
     </ScrollView>
@@ -186,7 +226,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f3f4f6",
   },
   header: {
     paddingTop: 60,
@@ -276,7 +315,6 @@ const styles = StyleSheet.create({
     marginTop: -40, // Pulls content up to overlap header
   },
   vehicleCard: {
-    backgroundColor: "#fff",
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
@@ -297,7 +335,6 @@ const styles = StyleSheet.create({
   vehicleIconBg: {
     width: 48,
     height: 48,
-    backgroundColor: "#f0fdf4",
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
@@ -305,16 +342,13 @@ const styles = StyleSheet.create({
   vehicleTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#111",
   },
   vehicleSubtitle: {
     fontSize: 13,
-    color: "#6b7280",
   },
   addVehicleBtn: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f0fdf4",
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
@@ -327,7 +361,6 @@ const styles = StyleSheet.create({
   menuItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 20,
     shadowColor: "#000",
@@ -353,12 +386,10 @@ const styles = StyleSheet.create({
   menuLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1f2937",
     marginBottom: 2,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: "#9ca3af",
   },
   footer: {
     alignItems: "center",
@@ -366,7 +397,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   versionText: {
-    color: "#d1d5db",
     fontSize: 12,
   },
 });

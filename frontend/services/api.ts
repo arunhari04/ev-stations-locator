@@ -1,28 +1,28 @@
-import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Adjust this if testing on Android Emulator (10.0.2.2) vs Physical Device (LAN IP)
-import Constants from 'expo-constants';
+import Constants from "expo-constants";
 
 const getBaseUrl = () => {
   // Try to get the machine's IP from the Expo packager
   const debuggerHost = Constants.expoConfig?.hostUri;
-  const localhost = debuggerHost?.split(':')[0];
+  const localhost = debuggerHost?.split(":")[0];
 
   if (localhost) {
     return `http://${localhost}:8000/api`;
   }
 
   // Fallback if detection fails
-  return 'http://192.168.43.122:8000/api';
+  return "http://192.168.43.122:8000/api";
 };
 
 const API_BASE_URL = getBaseUrl();
 
 const getHeaders = async () => {
-  const token = await AsyncStorage.getItem('auth_token');
+  const token = await AsyncStorage.getItem("auth_token");
   return {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
 };
@@ -31,52 +31,63 @@ export const api = {
   // --- AUTH ---
   login: async (email: string, password: string) => {
     const response = await fetch(`${API_BASE_URL}/auth/login/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Login failed');
+    if (!response.ok) throw new Error(data.detail || "Login failed");
     return data;
   },
 
   register: async (userData: any) => {
     const response = await fetch(`${API_BASE_URL}/auth/register/`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         email: userData.email,
         password: userData.password,
         first_name: userData.name,
-        last_name: '',
+        last_name: "",
         phone_number: userData.phone_number,
       }),
     });
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || 'Registration failed');
+    if (!response.ok) throw new Error(data.detail || "Registration failed");
     return data;
   },
 
   getProfile: async () => {
     const headers = await getHeaders();
     const response = await fetch(`${API_BASE_URL}/auth/profile/`, { headers });
-    if (!response.ok) throw new Error('Failed to fetch profile');
+    if (!response.ok) throw new Error("Failed to fetch profile");
+    return response.json();
+  },
+
+  updateProfile: async (data: any) => {
+    const headers = await getHeaders();
+    const response = await fetch(`${API_BASE_URL}/auth/profile/`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) throw new Error("Failed to update profile");
     return response.json();
   },
 
   logout: async () => {
     const headers = await getHeaders();
-    const refresh = await AsyncStorage.getItem('refresh_token');
-    
+    const refresh = await AsyncStorage.getItem("refresh_token");
+
     // Best effort logout
     try {
-      await fetch(`${API_BASE_URL}/auth/logout/`, { 
-        method: 'POST', 
+      await fetch(`${API_BASE_URL}/auth/logout/`, {
+        method: "POST",
         headers: headers,
-        body: JSON.stringify({ refresh }) 
+        body: JSON.stringify({ refresh }),
       });
     } catch (e) {
-      console.log('Logout error', e); 
+      console.log("Logout error", e);
       // ignore
     }
   },
@@ -84,21 +95,23 @@ export const api = {
   // --- LOCATION ---
   updateLocation: async (latitude: number, longitude: number) => {
     try {
-        const headers = await getHeaders();
-        // Updated endpoint path to be under auth/
-        await fetch(`${API_BASE_URL}/auth/location/update/`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ latitude, longitude }),
-        });
+      const headers = await getHeaders();
+      // Updated endpoint path to be under auth/
+      await fetch(`${API_BASE_URL}/auth/location/update/`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ latitude, longitude }),
+      });
     } catch (error) {
-        console.error("API: updateLocation ERROR", error);
+      console.error("API: updateLocation ERROR", error);
     }
   },
 
   getCurrentLocation: async () => {
     const headers = await getHeaders();
-    const response = await fetch(`${API_BASE_URL}/auth/location/current/`, { headers });
+    const response = await fetch(`${API_BASE_URL}/auth/location/current/`, {
+      headers,
+    });
     if (response.ok) return response.json();
     return null;
   },
@@ -106,7 +119,9 @@ export const api = {
   // --- PLACES ---
   getNearbyPlaces: async (lat: number, lng: number, distance = 10) => {
     // Public endpoint typically, but can be auth'd
-    const response = await fetch(`${API_BASE_URL}/places/nearby/?lat=${lat}&lng=${lng}&distance=${distance}`);
+    const response = await fetch(
+      `${API_BASE_URL}/places/nearby/?lat=${lat}&lng=${lng}&distance=${distance}`,
+    );
     if (!response.ok) return [];
     return response.json();
   },
@@ -114,54 +129,60 @@ export const api = {
   getShowroomDetails: async (id: number) => {
     const headers = await getHeaders();
     let response = await fetch(`${API_BASE_URL}/showrooms/${id}/`, { headers });
-    
+
     // If unauthorized (stale token), retry without headers
     if (response.status === 401) {
-       response = await fetch(`${API_BASE_URL}/showrooms/${id}/`);
+      response = await fetch(`${API_BASE_URL}/showrooms/${id}/`);
     }
 
-    if (!response.ok) throw new Error('Failed to load showroom details');
+    if (!response.ok) throw new Error("Failed to load showroom details");
     return response.json();
   },
 
   getServiceStationDetails: async (id: number) => {
     const headers = await getHeaders();
-    let response = await fetch(`${API_BASE_URL}/service-stations/${id}/`, { headers });
-    
+    let response = await fetch(`${API_BASE_URL}/service-stations/${id}/`, {
+      headers,
+    });
+
     // If unauthorized (stale token), retry without headers
     if (response.status === 401) {
-       response = await fetch(`${API_BASE_URL}/service-stations/${id}/`);
+      response = await fetch(`${API_BASE_URL}/service-stations/${id}/`);
     }
 
-    if (!response.ok) throw new Error('Failed to load service station details');
+    if (!response.ok) throw new Error("Failed to load service station details");
     return response.json();
   },
 
   getPlaceDetails: async (id: number) => {
-    const headers = await getHeaders(); 
+    const headers = await getHeaders();
     let response = await fetch(`${API_BASE_URL}/places/${id}/`, { headers });
-    
+
     // If unauthorized (stale token), retry without headers
     if (response.status === 401) {
-       response = await fetch(`${API_BASE_URL}/places/${id}/`);
+      response = await fetch(`${API_BASE_URL}/places/${id}/`);
     }
 
-    if (!response.ok) throw new Error('Failed to load place');
+    if (!response.ok) throw new Error("Failed to load place");
     return response.json();
   },
 
   searchPlaces: async (query: string) => {
-    const response = await fetch(`${API_BASE_URL}/places/search/?q=${encodeURIComponent(query)}`);
+    const response = await fetch(
+      `${API_BASE_URL}/places/search/?q=${encodeURIComponent(query)}`,
+    );
     if (!response.ok) return [];
     return response.json();
   },
-  
+
   filterPlaces: async (params: any) => {
-      // Assemble query string
-      const queryString = new URLSearchParams(params).toString();
-      const response = await fetch(`${API_BASE_URL}/places/filter/?${queryString}`);
-      if (!response.ok) return [];
-      return response.json();
+    // Assemble query string
+    const queryString = new URLSearchParams(params).toString();
+    const response = await fetch(
+      `${API_BASE_URL}/places/filter/?${queryString}`,
+    );
+    if (!response.ok) return [];
+    return response.json();
   },
 
   getPlaceOptions: async () => {
@@ -185,13 +206,13 @@ export const api = {
 
   // --- FAVORITES ---
   getFavorites: async (lat?: number, lng?: number) => {
-    const token = await AsyncStorage.getItem('auth_token');
+    const token = await AsyncStorage.getItem("auth_token");
     if (!token) return [];
 
     const headers = await getHeaders();
     let url = `${API_BASE_URL}/favorites/`;
     if (lat && lng) {
-        url += `?lat=${lat}&lng=${lng}`;
+      url += `?lat=${lat}&lng=${lng}`;
     }
     const response = await fetch(url, { headers });
     if (!response.ok) return [];
@@ -199,24 +220,24 @@ export const api = {
   },
 
   addFavorite: async (placeId: number) => {
-    const token = await AsyncStorage.getItem('auth_token');
+    const token = await AsyncStorage.getItem("auth_token");
     if (!token) return;
 
     const headers = await getHeaders();
     await fetch(`${API_BASE_URL}/favorites/add/`, {
-      method: 'POST',
+      method: "POST",
       headers,
       body: JSON.stringify({ place_id: placeId }),
     });
   },
 
   removeFavorite: async (placeId: number) => {
-    const token = await AsyncStorage.getItem('auth_token');
+    const token = await AsyncStorage.getItem("auth_token");
     if (!token) return;
 
     const headers = await getHeaders();
     await fetch(`${API_BASE_URL}/favorites/remove/`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers,
       body: JSON.stringify({ place_id: placeId }),
     });

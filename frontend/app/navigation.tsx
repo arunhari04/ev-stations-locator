@@ -12,12 +12,14 @@ import { X, Navigation, MapPin } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { calculateDistance } from "@/utils/distance";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function NavigationScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { location } = useAuth();
+  const { colors, theme } = useTheme();
   const webViewRef = useRef<WebView>(null);
 
   const [routeInfo, setRouteInfo] = useState({
@@ -44,7 +46,7 @@ export default function NavigationScreen() {
     try {
       // Use OSRM for routing (free public API)
       const response = await fetch(
-        `http://router.project-osrm.org/route/v1/driving/${location.longitude},${location.latitude};${stationLng},${stationLat}?overview=full&geometries=geojson`
+        `http://router.project-osrm.org/route/v1/driving/${location.longitude},${location.latitude};${stationLng},${stationLat}?overview=full&geometries=geojson`,
       );
       const data = await response.json();
 
@@ -63,7 +65,7 @@ export default function NavigationScreen() {
               geometry: route.geometry,
               start: [location.latitude, location.longitude],
               end: [stationLat, stationLng],
-            })
+            }),
           );
         }
       }
@@ -74,7 +76,7 @@ export default function NavigationScreen() {
         location?.latitude || 0,
         location?.longitude || 0,
         stationLat,
-        stationLng
+        stationLng,
       );
       setRouteInfo((prev) => ({ ...prev, distance: dist }));
     } finally {
@@ -99,7 +101,7 @@ export default function NavigationScreen() {
           type: "START_NAVIGATION",
           lat: location.latitude,
           lng: location.longitude,
-        })
+        }),
       );
     }
   };
@@ -193,7 +195,7 @@ export default function NavigationScreen() {
   `;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.mapContainer}>
         {location ? (
           <WebView
@@ -207,7 +209,7 @@ export default function NavigationScreen() {
                     type: "UPDATE_USER_LOCATION",
                     lat: location.latitude,
                     lng: location.longitude,
-                  })
+                  }),
                 );
                 // Trigger route fetch again if needed/late load
                 fetchRoute();
@@ -215,45 +217,81 @@ export default function NavigationScreen() {
             }}
           />
         ) : (
-          <View style={styles.loadingContainer}>
+          <View
+            style={[
+              styles.loadingContainer,
+              { backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6" },
+            ]}
+          >
             <ActivityIndicator size="large" color="#10b981" />
-            <Text style={{ marginTop: 10 }}>Locating...</Text>
+            <Text style={{ marginTop: 10, color: colors.text }}>
+              Locating...
+            </Text>
           </View>
         )}
 
-        <View style={[styles.routeCard, { top: 16 + insets.top }]}>
+        <View
+          style={[
+            styles.routeCard,
+            { top: 16 + insets.top, backgroundColor: colors.card },
+          ]}
+        >
           <View style={styles.routeHeader}>
             <TouchableOpacity onPress={() => router.back()}>
-              <X size={24} color="#6b7280" strokeWidth={2} />
+              <X size={24} color={colors.textSecondary} strokeWidth={2} />
             </TouchableOpacity>
             <View style={styles.routeInfo}>
-              <Text style={styles.stationName} numberOfLines={1}>
+              <Text
+                style={[styles.stationName, { color: colors.text }]}
+                numberOfLines={1}
+              >
                 {stationName || "Unknown Station"}
               </Text>
-              <Text style={styles.stationAddress} numberOfLines={1}>
+              <Text
+                style={[styles.stationAddress, { color: colors.textSecondary }]}
+                numberOfLines={1}
+              >
                 {stationAddress || "No address provided"}
               </Text>
             </View>
           </View>
 
-          <View style={styles.routeStats}>
+          <View
+            style={[
+              styles.routeStats,
+              { backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5" },
+            ]}
+          >
             <View style={styles.routeStat}>
               <Text style={styles.routeStatValue}>
                 {routeInfo.distance.toFixed(1)} km
               </Text>
-              <Text style={styles.routeStatLabel}>Distance</Text>
+              <Text
+                style={[styles.routeStatLabel, { color: colors.textSecondary }]}
+              >
+                Distance
+              </Text>
             </View>
             <View style={styles.routeStat}>
               <Text style={styles.routeStatValue}>
                 {formatDuration(routeInfo.duration)}
               </Text>
-              <Text style={styles.routeStatLabel}>ETA</Text>
+              <Text
+                style={[styles.routeStatLabel, { color: colors.textSecondary }]}
+              >
+                ETA
+              </Text>
             </View>
           </View>
         </View>
       </View>
 
-      <View style={styles.actions}>
+      <View
+        style={[
+          styles.actions,
+          { backgroundColor: colors.background, borderTopColor: colors.border },
+        ]}
+      >
         <TouchableOpacity
           style={styles.startButton}
           onPress={handleStartNavigation}
@@ -269,13 +307,11 @@ export default function NavigationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#f3f4f6",
   },
   mapContainer: {
     flex: 1,
@@ -283,10 +319,8 @@ const styles = StyleSheet.create({
   },
   routeCard: {
     position: "absolute",
-    top: 16,
     left: 16,
     right: 16,
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
@@ -307,18 +341,15 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 2,
   },
   stationAddress: {
     fontSize: 14,
-    color: "#6b7280",
   },
   routeStats: {
     flexDirection: "row",
     gap: 16,
     padding: 12,
-    backgroundColor: "#ecfdf5",
     borderRadius: 12,
   },
   routeStat: {
@@ -332,12 +363,9 @@ const styles = StyleSheet.create({
   },
   routeStatLabel: {
     fontSize: 14,
-    color: "#6b7280",
   },
   actions: {
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
     padding: 24,
     gap: 12,
   },

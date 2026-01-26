@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile_image', 'phone_number', 'current_latitude', 'current_longitude', 'last_location_update']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'profile_image', 'phone_number', 'is_dark_mode', 'allow_location_tracking', 'current_latitude', 'current_longitude', 'last_location_update']
         read_only_fields = ['last_location_update']
 
     def get_current_latitude(self, obj):

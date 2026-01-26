@@ -14,11 +14,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
 import { calculateDistance } from "@/utils/distance";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function FavoritesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { location } = useAuth(); // Get location from context
+  const { colors, theme } = useTheme();
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -73,7 +75,11 @@ export default function FavoritesScreen() {
       <View
         style={[
           styles.container,
-          { justifyContent: "center", alignItems: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: colors.background,
+          },
         ]}
       >
         <ActivityIndicator size="large" color="#10b981" />
@@ -82,22 +88,41 @@ export default function FavoritesScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-        <Text style={styles.title}>Favorite Stations</Text>
-        <Text style={styles.subtitle}>{favorites.length} saved locations</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 20,
+            backgroundColor: colors.background,
+            borderBottomColor: colors.border,
+          },
+        ]}
+      >
+        <Text style={[styles.title, { color: colors.text }]}>
+          Favorite Stations
+        </Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {favorites.length} saved locations
+        </Text>
       </View>
 
       <ScrollView
         style={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+          />
         }
       >
         {favorites.length === 0 && !loading && (
           <View style={{ padding: 20, alignItems: "center" }}>
-            <Text style={{ color: "#6b7280" }}>No favorites yet.</Text>
+            <Text style={{ color: colors.textSecondary }}>
+              No favorites yet.
+            </Text>
           </View>
         )}
         {favorites.map((item: any) => {
@@ -107,7 +132,7 @@ export default function FavoritesScreen() {
           return (
             <TouchableOpacity
               key={item.id} // Favorite ID
-              style={styles.stationCard}
+              style={[styles.stationCard, { backgroundColor: colors.card }]}
               onPress={() =>
                 router.push({
                   pathname:
@@ -121,7 +146,14 @@ export default function FavoritesScreen() {
               }
             >
               <View style={styles.stationHeader}>
-                <View style={styles.stationIcon}>
+                <View
+                  style={[
+                    styles.stationIcon,
+                    {
+                      backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5",
+                    },
+                  ]}
+                >
                   {place.place_type === "SHOWROOM" ? (
                     <ShoppingBag size={24} color="#3b82f6" strokeWidth={2} />
                   ) : place.place_type === "SERVICE" ? (
@@ -131,7 +163,9 @@ export default function FavoritesScreen() {
                   )}
                 </View>
                 <View style={styles.stationInfo}>
-                  <Text style={styles.stationName}>{place.name}</Text>
+                  <Text style={[styles.stationName, { color: colors.text }]}>
+                    {place.name}
+                  </Text>
                   <Text
                     style={[
                       styles.stationOperator,
@@ -141,7 +175,14 @@ export default function FavoritesScreen() {
                   >
                     {place.operator}
                   </Text>
-                  <Text style={styles.stationAddress}>{place.address}</Text>
+                  <Text
+                    style={[
+                      styles.stationAddress,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {place.address}
+                  </Text>
                 </View>
                 <TouchableOpacity
                   onPress={(e) => {
@@ -160,8 +201,14 @@ export default function FavoritesScreen() {
 
               <View style={styles.stationDetails}>
                 <View style={styles.detailItem}>
-                  <MapPin size={16} color="#9ca3af" strokeWidth={2} />
-                  <Text style={styles.detailText}>
+                  <MapPin
+                    size={16}
+                    color={colors.textSecondary}
+                    strokeWidth={2}
+                  />
+                  <Text
+                    style={[styles.detailText, { color: colors.textSecondary }]}
+                  >
                     {place.distance
                       ? place.distance.toFixed(1) + " mi"
                       : location
@@ -177,14 +224,17 @@ export default function FavoritesScreen() {
                 <View
                   style={[
                     styles.availableBadge,
+                    {
+                      backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5",
+                    },
                     place.status !== "ACTIVE" && {
-                      backgroundColor: "#fee2e2",
+                      backgroundColor: theme === "dark" ? "#7f1d1d" : "#fee2e2",
                     },
                     place.place_type === "SHOWROOM" && {
-                      backgroundColor: "#eff6ff",
+                      backgroundColor: theme === "dark" ? "#1e3a8a" : "#eff6ff",
                     },
                     place.place_type === "SERVICE" && {
-                      backgroundColor: "#fffbeb",
+                      backgroundColor: theme === "dark" ? "#451a03" : "#fffbeb",
                     },
                   ]}
                 >
@@ -203,7 +253,7 @@ export default function FavoritesScreen() {
                         : "Busy"}
                   </Text>
                 </View>
-                <Text style={styles.stationPrice}>
+                <Text style={[styles.stationPrice, { color: colors.text }]}>
                   {place.place_type === "SHOWROOM"
                     ? "Showroom"
                     : place.place_type === "SERVICE"
@@ -222,31 +272,25 @@ export default function FavoritesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
   },
   header: {
-    backgroundColor: "#fff",
     padding: 24,
     // paddingTop handled inline
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   title: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#111",
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 16,
-    color: "#6b7280",
   },
   content: {
     flex: 1,
     padding: 16,
   },
   stationCard: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -265,7 +309,6 @@ const styles = StyleSheet.create({
   stationIcon: {
     width: 48,
     height: 48,
-    backgroundColor: "#ecfdf5",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -276,7 +319,6 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   stationOperator: {
@@ -287,7 +329,6 @@ const styles = StyleSheet.create({
   },
   stationAddress: {
     fontSize: 14,
-    color: "#6b7280",
   },
   stationDetails: {
     flexDirection: "row",
@@ -301,10 +342,8 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 14,
-    color: "#6b7280",
   },
   availableBadge: {
-    backgroundColor: "#ecfdf5",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -318,6 +357,5 @@ const styles = StyleSheet.create({
     marginLeft: "auto",
     fontSize: 14,
     fontWeight: "600",
-    color: "#111",
   },
 });

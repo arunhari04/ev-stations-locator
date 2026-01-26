@@ -12,12 +12,14 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { ChevronLeft, Map, MapPin } from "lucide-react-native";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 import { calculateDistance } from "@/utils/distance";
 
 export default function ListingScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const { location } = useAuth();
+  const { colors, theme } = useTheme();
   const [stations, setStations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -56,7 +58,11 @@ export default function ListingScreen() {
       <View
         style={[
           styles.container,
-          { justifyContent: "center", alignItems: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: colors.background,
+          },
         ]}
       >
         <ActivityIndicator size="large" color="#10b981" />
@@ -65,27 +71,53 @@ export default function ListingScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#6b7280" strokeWidth={2} />
+          <ChevronLeft size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.title}>Nearby Stations</Text>
+        <Text style={[styles.title, { color: colors.text }]}>
+          Nearby Stations
+        </Text>
         <TouchableOpacity onPress={() => router.back()}>
           {/* Back implies returning to map usually */}
-          <Map size={24} color="#6b7280" strokeWidth={2} />
+          <Map size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.filterBar}>
+      <View
+        style={[
+          styles.filterBar,
+          { backgroundColor: colors.card, borderBottomColor: colors.border },
+        ]}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.filterBarContent}
         >
-          <View style={styles.filterContainer}>
-            <TouchableOpacity style={styles.filterChipActive}>
-              <Text style={styles.filterChipTextActive}>All</Text>
+          <View
+            style={[
+              styles.filterContainer,
+              { backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6" },
+            ]}
+          >
+            <TouchableOpacity
+              style={[
+                styles.filterChipActive,
+                { backgroundColor: theme === "dark" ? "#4b5563" : "#fff" },
+              ]}
+            >
+              <Text
+                style={[styles.filterChipTextActive, { color: colors.text }]}
+              >
+                All
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.filterChip}
@@ -107,6 +139,7 @@ export default function ListingScreen() {
             key={station.id}
             style={[
               styles.stationCard,
+              { backgroundColor: colors.card },
               station.status === "OFFLINE" && styles.stationCardDisabled,
             ]}
             onPress={() =>
@@ -133,7 +166,9 @@ export default function ListingScreen() {
             <View style={styles.stationContent}>
               <View style={styles.stationHeader}>
                 <View style={styles.stationInfo}>
-                  <Text style={styles.stationName}>{station.name}</Text>
+                  <Text style={[styles.stationName, { color: colors.text }]}>
+                    {station.name}
+                  </Text>
                   <Text
                     style={[
                       styles.stationOperator,
@@ -143,7 +178,14 @@ export default function ListingScreen() {
                   >
                     {station.operator}
                   </Text>
-                  <Text style={styles.stationAddress}>{station.address}</Text>
+                  <Text
+                    style={[
+                      styles.stationAddress,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
+                    {station.address}
+                  </Text>
                 </View>
               </View>
 
@@ -151,6 +193,9 @@ export default function ListingScreen() {
                 <View
                   style={[
                     styles.availabilityBadge,
+                    {
+                      backgroundColor: theme === "dark" ? "#1f2937" : "#ecfdf5",
+                    },
                     station.status === "OFFLINE" && styles.unavailableBadge,
                     station.status === "BUSY" && styles.limitedBadge,
                     station.place_type === "SHOWROOM" && styles.showroomBadge,
@@ -171,7 +216,13 @@ export default function ListingScreen() {
                 </View>
                 {station.charger_types &&
                   station.charger_types.map((type: string, idx: number) => (
-                    <Text key={idx} style={styles.typeBadge}>
+                    <Text
+                      key={idx}
+                      style={[
+                        styles.typeBadge,
+                        { color: colors.textSecondary },
+                      ]}
+                    >
                       {type}{" "}
                     </Text>
                   ))}
@@ -179,8 +230,13 @@ export default function ListingScreen() {
 
               <View style={styles.stationFooter}>
                 <View style={styles.distanceContainer}>
-                  <MapPin size={14} color="#6b7280" />
-                  <Text style={styles.distanceText}>
+                  <MapPin size={14} color={colors.textSecondary} />
+                  <Text
+                    style={[
+                      styles.distanceText,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {station.distance
                       ? station.distance.toFixed(1) + " mi"
                       : location
@@ -193,7 +249,7 @@ export default function ListingScreen() {
                         : "N/A"}
                   </Text>
                 </View>
-                <Text style={styles.priceText}>
+                <Text style={[styles.priceText, { color: colors.text }]}>
                   {station.place_type === "SHOWROOM"
                     ? "Showroom"
                     : station.place_type === "SERVICE"
@@ -212,7 +268,6 @@ export default function ListingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
   },
   header: {
     flexDirection: "row",
@@ -220,19 +275,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     paddingTop: 60,
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
   },
   filterBar: {
-    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
     paddingVertical: 12,
   },
   filterBarContent: {
@@ -241,7 +291,6 @@ const styles = StyleSheet.create({
   },
   filterContainer: {
     flexDirection: "row",
-    backgroundColor: "#f3f4f6",
     padding: 4,
     borderRadius: 12,
     marginHorizontal: 16,
@@ -258,7 +307,6 @@ const styles = StyleSheet.create({
     color: "#6b7280",
   },
   filterChipActive: {
-    backgroundColor: "#fff",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
@@ -272,7 +320,6 @@ const styles = StyleSheet.create({
   filterChipTextActive: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#111",
   },
   content: {
     flex: 1,
@@ -281,7 +328,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   stationCard: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     marginBottom: 12,
     overflow: "hidden",
@@ -313,7 +359,6 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   stationOperator: {
@@ -324,7 +369,6 @@ const styles = StyleSheet.create({
   },
   stationAddress: {
     fontSize: 14,
-    color: "#6b7280",
   },
   stationBadges: {
     flexDirection: "row",
@@ -333,7 +377,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   availabilityBadge: {
-    backgroundColor: "#ecfdf5",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -357,7 +400,6 @@ const styles = StyleSheet.create({
   },
   typeBadge: {
     fontSize: 12,
-    color: "#6b7280",
   },
   showroomBadge: {
     backgroundColor: "#eff6ff",
@@ -383,11 +425,9 @@ const styles = StyleSheet.create({
   },
   distanceText: {
     fontSize: 14,
-    color: "#6b7280",
   },
   priceText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111",
   },
 });

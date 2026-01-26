@@ -12,6 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import { ChevronLeft, MapPin, Phone, Search, List } from "lucide-react-native";
 import { api } from "../../services/api";
+import { useTheme } from "@/context/ThemeContext";
 
 type Place = {
   id: number;
@@ -27,6 +28,7 @@ type Place = {
 
 export default function ShowroomsScreen() {
   const router = useRouter();
+  const { colors, theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [showrooms, setShowrooms] = useState<Place[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,34 +74,44 @@ export default function ShowroomsScreen() {
   );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color="#6b7280" strokeWidth={2} />
+          <ChevronLeft size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.title}>EV Showrooms</Text>
+        <Text style={[styles.title, { color: colors.text }]}>EV Showrooms</Text>
         <TouchableOpacity>
-          <List size={24} color="#6b7280" strokeWidth={2} />
+          <List size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search size={20} color="#9ca3af" strokeWidth={2} />
+      <View
+        style={[
+          styles.searchContainer,
+          { backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb" },
+        ]}
+      >
+        <Search size={20} color={colors.textSecondary} strokeWidth={2} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text }]}
           placeholder="Search showrooms..."
+          placeholderTextColor={colors.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
       </View>
 
-      <View style={styles.listContainer}>
+      <View
+        style={[styles.listContainer, { backgroundColor: colors.background }]}
+      >
         <View style={styles.listHeader}>
-          <Text style={styles.listTitle}>Nearby Showrooms</Text>
-          <Text style={styles.resultCount}>
+          <Text style={[styles.listTitle, { color: colors.text }]}>
+            Nearby Showrooms
+          </Text>
+          <Text style={[styles.resultCount, { color: colors.textSecondary }]}>
             {filteredShowrooms.length} results
           </Text>
         </View>
@@ -117,7 +129,7 @@ export default function ShowroomsScreen() {
             {filteredShowrooms.map((showroom) => (
               <TouchableOpacity
                 key={showroom.id}
-                style={styles.showroomCard}
+                style={[styles.showroomCard, { backgroundColor: colors.card }]}
                 onPress={() =>
                   router.push(`/showroom-details?id=${showroom.id}`)
                 }
@@ -133,7 +145,11 @@ export default function ShowroomsScreen() {
                 <View style={styles.cardContent}>
                   <View style={styles.cardHeader}>
                     <View style={styles.cardTitle}>
-                      <Text style={styles.showroomName}>{showroom.name}</Text>
+                      <Text
+                        style={[styles.showroomName, { color: colors.text }]}
+                      >
+                        {showroom.name}
+                      </Text>
                       {/* Rating removed as requested */}
                     </View>
                     {showroom.distance !== undefined && (
@@ -145,14 +161,33 @@ export default function ShowroomsScreen() {
 
                   <View style={styles.cardDetails}>
                     <View style={styles.detailRow}>
-                      <MapPin size={16} color="#6b7280" strokeWidth={2} />
-                      <Text style={styles.detailText}>{showroom.address}</Text>
+                      <MapPin
+                        size={16}
+                        color={colors.textSecondary}
+                        strokeWidth={2}
+                      />
+                      <Text
+                        style={[
+                          styles.detailText,
+                          { color: colors.textSecondary },
+                        ]}
+                      >
+                        {showroom.address}
+                      </Text>
                     </View>
                     {/* Phone might be available in detailed view, but serializer lists operator name here mostly */}
                   </View>
 
                   <View style={styles.brandsContainer}>
-                    <View style={styles.brandTag}>
+                    <View
+                      style={[
+                        styles.brandTag,
+                        {
+                          backgroundColor:
+                            theme === "dark" ? "#1e3a8a" : "#eff6ff",
+                        },
+                      ]}
+                    >
                       <Text style={styles.brandText}>
                         {showroom.operator || "Showroom"}
                       </Text>
@@ -160,7 +195,11 @@ export default function ShowroomsScreen() {
                   </View>
 
                   {showroom.opening_hours && (
-                    <Text style={styles.hours}>{showroom.opening_hours}</Text>
+                    <Text
+                      style={[styles.hours, { color: colors.textSecondary }]}
+                    >
+                      {showroom.opening_hours}
+                    </Text>
                   )}
                 </View>
               </TouchableOpacity>
@@ -175,7 +214,6 @@ export default function ShowroomsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   center: {
     flex: 1,
@@ -190,7 +228,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   backButton: {
     padding: 8,
@@ -198,7 +235,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
   },
   searchContainer: {
     flexDirection: "row",
@@ -207,17 +243,14 @@ const styles = StyleSheet.create({
     margin: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: "#f9fafb",
     borderRadius: 12,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#374151",
   },
   listContainer: {
     flex: 1,
-    backgroundColor: "#f9fafb",
   },
   listHeader: {
     flexDirection: "row",
@@ -229,11 +262,9 @@ const styles = StyleSheet.create({
   listTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
   },
   resultCount: {
     fontSize: 14,
-    color: "#6b7280",
   },
   showroomList: {
     flex: 1,
@@ -243,7 +274,6 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   showroomCard: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     marginBottom: 12,
     overflow: "hidden",
@@ -272,7 +302,6 @@ const styles = StyleSheet.create({
   showroomName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   distance: {
@@ -291,7 +320,6 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: "#6b7280",
   },
   brandsContainer: {
     flexDirection: "row",
@@ -300,7 +328,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   brandTag: {
-    backgroundColor: "#eff6ff",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -312,6 +339,5 @@ const styles = StyleSheet.create({
   },
   hours: {
     fontSize: 12,
-    color: "#9ca3af",
   },
 });

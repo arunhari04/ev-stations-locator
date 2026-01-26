@@ -16,6 +16,8 @@ interface AuthContextType {
     latitude: number;
     longitude: number;
   } | null>;
+  refreshUser: () => Promise<void>;
+  requestLocationAccess: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -238,6 +240,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return await getCurrentLocation();
   };
 
+  const requestLocationAccess = async (): Promise<boolean> => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status === "granted") {
+        await startLocationTracking();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      console.log("Error requesting location permission", e);
+      return false;
+    }
+  };
+
+  const refreshUser = async () => {
+    try {
+      const profile = await api.getProfile();
+      setUser(profile);
+    } catch (e) {
+      console.log("Failed to refresh user profile", e);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -250,6 +275,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signOut,
         setLocation,
         refreshLocation,
+        refreshUser,
+        requestLocationAccess,
       }}
     >
       {children}

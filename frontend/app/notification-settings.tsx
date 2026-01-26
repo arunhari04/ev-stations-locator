@@ -12,9 +12,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, Zap, MapPin, Percent, Info } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useTheme } from "../context/ThemeContext";
 
 export default function NotificationSettingsScreen() {
   const router = useRouter();
+  const { colors, theme } = useTheme();
 
   // Mock Settings States
   const [chargingUpdates, setChargingUpdates] = useState(true);
@@ -46,8 +48,12 @@ export default function NotificationSettingsScreen() {
             <Icon size={24} color={color} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.itemLabel}>{label}</Text>
-            <Text style={styles.itemDesc}>{description}</Text>
+            <Text style={[styles.itemLabel, { color: colors.text }]}>
+              {label}
+            </Text>
+            <Text style={[styles.itemDesc, { color: colors.textSecondary }]}>
+              {description}
+            </Text>
           </View>
         </View>
         <Switch
@@ -61,7 +67,7 @@ export default function NotificationSettingsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={["#10b981", "#059669"]} style={styles.header}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.headerContent}>
@@ -78,13 +84,15 @@ export default function NotificationSettingsScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>Manage Preferences</Text>
-        <Text style={styles.sectionSubtitle}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          Manage Preferences
+        </Text>
+        <Text style={[styles.sectionSubtitle, { color: colors.textSecondary }]}>
           Control which notifications you want to receive directly to your
           device.
         </Text>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: colors.card }]}>
           <ToggleItem
             icon={Percent}
             label="Charging Updates"
@@ -93,7 +101,7 @@ export default function NotificationSettingsScreen() {
             onToggle={setChargingUpdates}
             color="#10b981"
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <ToggleItem
             icon={MapPin}
             label="New Stations"
@@ -102,7 +110,7 @@ export default function NotificationSettingsScreen() {
             onToggle={setStationAlerts}
             color="#3b82f6"
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <ToggleItem
             icon={Zap}
             label="Promotional Offers"
@@ -111,7 +119,7 @@ export default function NotificationSettingsScreen() {
             onToggle={setOffers}
             color="#f59e0b"
           />
-          <View style={styles.divider} />
+          <View style={[styles.divider, { backgroundColor: colors.border }]} />
           <ToggleItem
             icon={Info}
             label="App Updates & Info"
@@ -127,7 +135,7 @@ export default function NotificationSettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3f4f6" },
+  container: { flex: 1 },
   header: {
     paddingBottom: 20,
     borderBottomLeftRadius: 24,
@@ -150,17 +158,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1f2937",
     marginBottom: 8,
   },
   sectionSubtitle: {
     fontSize: 14,
-    color: "#6b7280",
     marginBottom: 24,
     lineHeight: 20,
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
@@ -191,9 +196,8 @@ const styles = StyleSheet.create({
   itemLabel: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1f2937",
     marginBottom: 4,
   },
-  itemDesc: { fontSize: 13, color: "#6b7280", lineHeight: 18 },
-  divider: { height: 1, backgroundColor: "#f3f4f6", marginVertical: 8 },
+  itemDesc: { fontSize: 13, lineHeight: 18 },
+  divider: { height: 1, marginVertical: 8 },
 });

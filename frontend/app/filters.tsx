@@ -11,10 +11,12 @@ import { useRouter } from "expo-router";
 import { X } from "lucide-react-native";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/services/api";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function FiltersScreen() {
   const router = useRouter();
   const { location } = useAuth();
+  const { colors, theme } = useTheme();
 
   // Dynamic Options from Backend
   const [availableChargerTypes, setAvailableChargerTypes] = useState<string[]>(
@@ -112,12 +114,12 @@ export default function FiltersScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()}>
-          <X size={24} color="#6b7280" strokeWidth={2} />
+          <X size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
-        <Text style={styles.title}>Filters</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Filters</Text>
         <TouchableOpacity onPress={resetFilters}>
           <Text style={styles.resetButton}>Reset</Text>
         </TouchableOpacity>
@@ -126,59 +128,80 @@ export default function FiltersScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* Charger Types */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Charger Type</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Charger Type
+          </Text>
           <View style={styles.optionsList}>
             {availableChargerTypes.map((type, idx) => {
               const checked = selectedChargerTypes.includes(type);
               return (
                 <TouchableOpacity
                   key={idx}
-                  style={styles.checkboxOption}
+                  style={[
+                    styles.checkboxOption,
+                    { borderColor: colors.border },
+                  ]}
                   onPress={() => toggleChargerType(type)}
                 >
                   <View
-                    style={[styles.checkbox, checked && styles.checkboxChecked]}
+                    style={[
+                      styles.checkbox,
+                      { borderColor: colors.border },
+                      checked && styles.checkboxChecked,
+                    ]}
                   />
                   <View style={styles.optionText}>
-                    <Text style={styles.optionLabel}>{type}</Text>
+                    <Text style={[styles.optionLabel, { color: colors.text }]}>
+                      {type}
+                    </Text>
                   </View>
                 </TouchableOpacity>
               );
             })}
             {availableChargerTypes.length === 0 && (
-              <Text style={{ color: "#9ca3af" }}>Loading types...</Text>
+              <Text style={{ color: colors.textSecondary }}>
+                Loading types...
+              </Text>
             )}
           </View>
         </View>
 
         {/* Availability (Removed 24/7) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Availability</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Availability
+          </Text>
           <View style={styles.optionsList}>
             <TouchableOpacity
-              style={styles.radioOption}
+              style={[styles.radioOption, { borderColor: colors.border }]}
               onPress={() => setAvailability("all")}
             >
               <View
                 style={[
                   styles.radio,
+                  { borderColor: colors.border },
                   availability === "all" && styles.radioSelected,
                 ]}
               />
-              <Text style={styles.optionLabel}>All Stations</Text>
+              <Text style={[styles.optionLabel, { color: colors.text }]}>
+                All Stations
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.radioOption}
+              style={[styles.radioOption, { borderColor: colors.border }]}
               onPress={() => setAvailability("available")}
             >
               <View
                 style={[
                   styles.radio,
+                  { borderColor: colors.border },
                   availability === "available" && styles.radioSelected,
                 ]}
               />
-              <Text style={styles.optionLabel}>Available Now</Text>
+              <Text style={[styles.optionLabel, { color: colors.text }]}>
+                Available Now
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -186,32 +209,48 @@ export default function FiltersScreen() {
         {/* Distance */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Distance</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Distance
+            </Text>
             <Text style={styles.distanceValue}>{distance} miles</Text>
           </View>
           <View style={styles.sliderLabels}>
-            <Text style={styles.sliderLabel}>1 mi</Text>
-            <Text style={styles.sliderLabel}>50 mi</Text>
+            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>
+              1 mi
+            </Text>
+            <Text style={[styles.sliderLabel, { color: colors.textSecondary }]}>
+              50 mi
+            </Text>
           </View>
         </View>
 
         {/* Price */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Price Range</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Price Range
+            </Text>
             <Text style={styles.priceValue}>$0.20 - $0.40/kWh</Text>
           </View>
           <View style={styles.priceInputs}>
             <TextInput
-              style={styles.priceInput}
+              style={[
+                styles.priceInput,
+                { borderColor: colors.border, color: colors.text },
+              ]}
               placeholder="Min"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={minPrice}
               onChangeText={setMinPrice}
             />
             <TextInput
-              style={styles.priceInput}
+              style={[
+                styles.priceInput,
+                { borderColor: colors.border, color: colors.text },
+              ]}
               placeholder="Max"
+              placeholderTextColor={colors.textSecondary}
               keyboardType="numeric"
               value={maxPrice}
               onChangeText={setMaxPrice}
@@ -221,7 +260,9 @@ export default function FiltersScreen() {
 
         {/* Amenities */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Amenities</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Amenities
+          </Text>
           <View style={styles.amenitiesGrid}>
             {availableAmenities.map((amenity, idx) => {
               const selected = selectedAmenities.includes(amenity);
@@ -230,19 +271,25 @@ export default function FiltersScreen() {
                   key={idx}
                   style={[
                     styles.amenityChip,
-                    selected && styles.amenityChipSelected,
+                    { borderColor: colors.border },
+                    selected && {
+                      borderColor: "#10b981",
+                      backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5",
+                    },
                   ]}
                   onPress={() => toggleAmenity(amenity)}
                 >
                   <View
                     style={[
                       styles.amenityCheckbox,
+                      { borderColor: colors.border },
                       selected && styles.amenityCheckboxChecked,
                     ]}
                   />
                   <Text
                     style={[
                       styles.amenityLabel,
+                      { color: colors.text },
                       selected && styles.amenityLabelSelected,
                     ]}
                   >
@@ -252,13 +299,15 @@ export default function FiltersScreen() {
               );
             })}
             {availableAmenities.length === 0 && (
-              <Text style={{ color: "#9ca3af" }}>Loading amenities...</Text>
+              <Text style={{ color: colors.textSecondary }}>
+                Loading amenities...
+              </Text>
             )}
           </View>
         </View>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: colors.border }]}>
         <TouchableOpacity style={styles.applyButton} onPress={applyFilters}>
           <Text style={styles.applyButtonText}>Apply Filters</Text>
         </TouchableOpacity>
@@ -270,7 +319,6 @@ export default function FiltersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -279,12 +327,10 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingTop: 60,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
   },
   resetButton: {
     fontSize: 16,
@@ -301,7 +347,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 12,
   },
   sectionHeader: {
@@ -319,14 +364,12 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
     borderRadius: 12,
   },
   checkbox: {
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#d1d5db",
     borderRadius: 4,
   },
   checkboxChecked: {
@@ -338,7 +381,6 @@ const styles = StyleSheet.create({
   },
   optionLabel: {
     fontSize: 16,
-    color: "#374151",
     marginBottom: 2,
   },
   optionSubtext: {
@@ -351,14 +393,12 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
     borderRadius: 12,
   },
   radio: {
     width: 20,
     height: 20,
     borderWidth: 2,
-    borderColor: "#d1d5db",
     borderRadius: 10,
   },
   radioSelected: {
@@ -377,7 +417,6 @@ const styles = StyleSheet.create({
   },
   sliderLabel: {
     fontSize: 12,
-    color: "#9ca3af",
   },
   priceValue: {
     fontSize: 14,
@@ -391,7 +430,6 @@ const styles = StyleSheet.create({
   priceInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: "#d1d5db",
     borderRadius: 12,
     padding: 12,
     fontSize: 16,
@@ -408,19 +446,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
     borderRadius: 12,
     width: "48%",
-  },
-  amenityChipSelected: {
-    borderColor: "#10b981",
-    backgroundColor: "#ecfdf5",
   },
   amenityCheckbox: {
     width: 16,
     height: 16,
     borderWidth: 2,
-    borderColor: "#d1d5db",
     borderRadius: 4,
   },
   amenityCheckboxChecked: {
@@ -429,7 +461,6 @@ const styles = StyleSheet.create({
   },
   amenityLabel: {
     fontSize: 14,
-    color: "#374151",
   },
   amenityLabelSelected: {
     color: "#10b981",
@@ -438,7 +469,6 @@ const styles = StyleSheet.create({
   footer: {
     padding: 16,
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
   },
   applyButton: {
     backgroundColor: "#10b981",

@@ -21,6 +21,7 @@ import {
   Heart,
 } from "lucide-react-native";
 import { api } from "../services/api";
+import { useTheme } from "@/context/ThemeContext";
 
 type Showroom = {
   id: number;
@@ -46,6 +47,7 @@ type Showroom = {
 export default function ShowroomDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
+  const { colors, theme } = useTheme();
 
   const [showroom, setShowroom] = useState<Showroom | null>(null);
   const [loading, setLoading] = useState(true);
@@ -136,7 +138,13 @@ export default function ShowroomDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View
+        style={[
+          styles.container,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
@@ -144,7 +152,13 @@ export default function ShowroomDetailsScreen() {
 
   if (error || !showroom) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View
+        style={[
+          styles.container,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Text style={styles.errorText}>{error || "Showroom not found"}</Text>
         <TouchableOpacity
           style={styles.retryButton}
@@ -156,7 +170,7 @@ export default function ShowroomDetailsScreen() {
           style={styles.backButtonFixed}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color="#111" />
+          <ChevronLeft size={24} color={colors.text} />
         </TouchableOpacity>
       </View>
     );
@@ -171,23 +185,44 @@ export default function ShowroomDetailsScreen() {
         };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.imageContainer}>
         <Image source={heroImage} style={styles.image} />
         <TouchableOpacity
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            {
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.3)",
+            },
+          ]}
           onPress={() => router.back()}
         >
           <ChevronLeft size={24} color="#fff" strokeWidth={2} />
         </TouchableOpacity>
         <TouchableOpacity
-          style={styles.favoriteButton}
+          style={[
+            styles.favoriteButton,
+            {
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)",
+            },
+          ]}
           onPress={toggleFavorite}
         >
           <Heart
             size={24}
-            color={favorite ? "#ec4899" : "#111"}
-            fill={favorite ? "#ec4899" : "rgba(255,255,255,0.8)"}
+            color={favorite ? "#ec4899" : theme === "dark" ? "#fff" : "#111"}
+            fill={
+              favorite
+                ? "#ec4899"
+                : theme === "dark"
+                  ? "none"
+                  : "rgba(255,255,255,0.8)"
+            }
             strokeWidth={2}
           />
         </TouchableOpacity>
@@ -196,7 +231,9 @@ export default function ShowroomDetailsScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleContainer}>
-            <Text style={styles.showroomName}>{showroom.name}</Text>
+            <Text style={[styles.showroomName, { color: colors.text }]}>
+              {showroom.name}
+            </Text>
           </View>
           {showroom.distance !== undefined && (
             <Text style={styles.distance}>
@@ -206,25 +243,40 @@ export default function ShowroomDetailsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Contact Information
+          </Text>
 
           <TouchableOpacity
-            style={styles.contactItem}
+            style={[styles.contactItem, { backgroundColor: colors.card }]}
             onPress={handleDirections}
           >
             <MapPin size={20} color="#3b82f6" strokeWidth={2} />
             <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Address</Text>
-              <Text style={styles.contactValue}>{showroom.address}</Text>
+              <Text
+                style={[styles.contactLabel, { color: colors.textSecondary }]}
+              >
+                Address
+              </Text>
+              <Text style={[styles.contactValue, { color: colors.text }]}>
+                {showroom.address}
+              </Text>
             </View>
           </TouchableOpacity>
 
           {showroom.operator?.phone && (
-            <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
+            <TouchableOpacity
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
+              onPress={handleCall}
+            >
               <Phone size={20} color="#3b82f6" strokeWidth={2} />
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Phone</Text>
-                <Text style={styles.contactValue}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Phone
+                </Text>
+                <Text style={[styles.contactValue, { color: colors.text }]}>
                   {showroom.operator.phone}
                 </Text>
               </View>
@@ -232,11 +284,18 @@ export default function ShowroomDetailsScreen() {
           )}
 
           {showroom.operator?.email && (
-            <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
+            <TouchableOpacity
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
+              onPress={handleEmail}
+            >
               <Mail size={20} color="#3b82f6" strokeWidth={2} />
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Email</Text>
-                <Text style={styles.contactValue}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Email
+                </Text>
+                <Text style={[styles.contactValue, { color: colors.text }]}>
                   {showroom.operator.email}
                 </Text>
               </View>
@@ -245,13 +304,17 @@ export default function ShowroomDetailsScreen() {
 
           {showroom.operator?.website && (
             <TouchableOpacity
-              style={styles.contactItem}
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleWebsite}
             >
               <Globe size={20} color="#3b82f6" strokeWidth={2} />
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Website</Text>
-                <Text style={styles.contactValue}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Website
+                </Text>
+                <Text style={[styles.contactValue, { color: colors.text }]}>
                   {showroom.operator.website}
                 </Text>
               </View>
@@ -261,39 +324,73 @@ export default function ShowroomDetailsScreen() {
 
         {showroom.opening_hours && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Operating Hours</Text>
-            <View style={styles.hoursCard}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Operating Hours
+            </Text>
+            <View
+              style={[
+                styles.hoursCard,
+                { backgroundColor: theme === "dark" ? "#1e3a8a20" : "#eff6ff" },
+              ]}
+            >
               <Clock size={20} color="#3b82f6" strokeWidth={2} />
               <View style={styles.hoursContent}>
-                <Text style={styles.hoursTitle}>{showroom.opening_hours}</Text>
-                <Text style={styles.hoursSubtitle}>Daily</Text>
+                <Text style={[styles.hoursTitle, { color: colors.text }]}>
+                  {showroom.opening_hours}
+                </Text>
+                <Text
+                  style={[
+                    styles.hoursSubtitle,
+                    { color: colors.textSecondary },
+                  ]}
+                >
+                  Daily
+                </Text>
               </View>
             </View>
           </View>
         )}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Available Brands</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Available Brands
+          </Text>
           <View style={styles.brandsContainer}>
-            <View style={styles.brandCard}>
+            <View
+              style={[
+                styles.brandCard,
+                { backgroundColor: theme === "dark" ? "#1e3a8a20" : "#eff6ff" },
+              ]}
+            >
               <Text style={styles.brandName}>
                 {showroom.operator?.name || "Unknown Brand"}
               </Text>
-              <Text style={styles.brandModels}>All Models Available</Text>
+              <Text
+                style={[styles.brandModels, { color: colors.textSecondary }]}
+              >
+                All Models Available
+              </Text>
             </View>
           </View>
         </View>
 
         {showroom.amenities.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Services & Facilities</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Services & Facilities
+            </Text>
             <View style={styles.amenitiesGrid}>
               {showroom.amenities.map((amenity, index) => (
-                <View key={index} style={styles.amenityItem}>
+                <View
+                  key={index}
+                  style={[styles.amenityItem, { backgroundColor: colors.card }]}
+                >
                   <Text style={styles.amenityIcon}>
                     {getAmenityIcon(amenity)}
                   </Text>
-                  <Text style={styles.amenityText}>{amenity}</Text>
+                  <Text style={[styles.amenityText, { color: colors.text }]}>
+                    {amenity}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -323,7 +420,6 @@ export default function ShowroomDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   center: {
     justifyContent: "center",

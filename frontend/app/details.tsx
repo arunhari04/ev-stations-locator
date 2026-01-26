@@ -25,12 +25,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
 import { calculateDistance } from "@/utils/distance";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function DetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { location } = useAuth();
+  const { colors, theme } = useTheme();
 
   const [station, setStation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -86,7 +88,11 @@ export default function DetailsScreen() {
       <View
         style={[
           styles.container,
-          { justifyContent: "center", alignItems: "center" },
+          {
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: colors.background,
+          },
         ]}
       >
         <ActivityIndicator size="large" color="#10b981" />
@@ -96,13 +102,16 @@ export default function DetailsScreen() {
 
   if (!station)
     return (
-      <View style={styles.container}>
-        <Text>Station not found</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Station not found</Text>
       </View>
     );
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.imageContainer}>
         <Image
           source={{
@@ -114,18 +123,36 @@ export default function DetailsScreen() {
           style={styles.image}
         />
         <TouchableOpacity
-          style={[styles.backButton, { top: 16 + insets.top }]}
+          style={[
+            styles.backButton,
+            {
+              top: 16 + insets.top,
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)",
+            },
+          ]}
           onPress={() => router.back()}
         >
-          <ChevronLeft size={24} color="#111" strokeWidth={2} />
+          <ChevronLeft
+            size={24}
+            color={theme === "dark" ? "#fff" : "#111"}
+            strokeWidth={2}
+          />
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.favoriteButton, { top: 16 + insets.top }]}
+          style={[
+            styles.favoriteButton,
+            {
+              top: 16 + insets.top,
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(255,255,255,0.9)",
+            },
+          ]}
           onPress={toggleFavorite}
         >
           <Heart
             size={24}
-            color={favorite ? "#ef4444" : "#111"}
+            color={favorite ? "#ef4444" : theme === "dark" ? "#fff" : "#111"}
             fill={favorite ? "#ef4444" : "none"}
             strokeWidth={2}
           />
@@ -134,29 +161,51 @@ export default function DetailsScreen() {
 
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.stationName}>{station.name}</Text>
-          <Text style={styles.stationOperator}>{station.operator}</Text>
-          <Text style={styles.stationAddress}>{station.address}</Text>
+          <Text style={[styles.stationName, { color: colors.text }]}>
+            {station.name}
+          </Text>
+          <Text
+            style={[styles.stationOperator, { color: colors.textSecondary }]}
+          >
+            {station.operator}
+          </Text>
+          <Text
+            style={[styles.stationAddress, { color: colors.textSecondary }]}
+          >
+            {station.address}
+          </Text>
           <Text style={styles.price}>{station.price}</Text>
         </View>
 
         <View style={styles.badges}>
-          <View style={styles.availableBadge}>
+          <View
+            style={[
+              styles.availableBadge,
+              { backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5" },
+            ]}
+          >
             <Text style={styles.availableBadgeText}>{station.status}</Text>
           </View>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{station.opening_hours}</Text>
+          <View style={[styles.badge, { backgroundColor: colors.card }]}>
+            <Text style={[styles.badgeText, { color: colors.textSecondary }]}>
+              {station.opening_hours}
+            </Text>
           </View>
           {station.is_fast_charging && (
-            <View style={styles.badgeBlue}>
+            <View
+              style={[
+                styles.badgeBlue,
+                { backgroundColor: theme === "dark" ? "#1e3a8a" : "#eff6ff" },
+              ]}
+            >
               <Text style={styles.badgeBlueText}>Fast Charging</Text>
             </View>
           )}
         </View>
 
         <View style={styles.statsGrid}>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {station.distance
                 ? station.distance.toFixed(1)
                 : location
@@ -168,26 +217,46 @@ export default function DetailsScreen() {
                     ).toFixed(1)
                   : "-"}
             </Text>
-            <Text style={styles.statLabel}>km away</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              km away
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
               {station.charger_types?.length || 0}
             </Text>
-            <Text style={styles.statLabel}>types</Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              types
+            </Text>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statValue}>{station.power_kw}</Text>
-            <Text style={styles.statLabel}>kW max</Text>
+          <View style={[styles.statCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.statValue, { color: colors.text }]}>
+              {station.power_kw}
+            </Text>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>
+              kW max
+            </Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Charger Types</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Charger Types
+          </Text>
           <View style={styles.chargerList}>
             {station.place_chargers?.map((charger: any, idx: number) => (
-              <View key={idx} style={styles.chargerItem}>
-                <View style={styles.chargerIcon}>
+              <View
+                key={idx}
+                style={[styles.chargerItem, { backgroundColor: colors.card }]}
+              >
+                <View
+                  style={[
+                    styles.chargerIcon,
+                    {
+                      backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5",
+                    },
+                  ]}
+                >
                   <Zap
                     size={20}
                     color={charger.is_available ? "#10b981" : "#ef4444"}
@@ -195,14 +264,25 @@ export default function DetailsScreen() {
                   />
                 </View>
                 <View style={styles.chargerInfo}>
-                  <Text style={styles.chargerName}>{charger.name}</Text>
-                  <Text style={styles.chargerPower}>
+                  <Text style={[styles.chargerName, { color: colors.text }]}>
+                    {charger.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.chargerPower,
+                      { color: colors.textSecondary },
+                    ]}
+                  >
                     {charger.max_power_kw} kW • {charger.connector_type}
                   </Text>
                 </View>
                 <View style={{ alignItems: "flex-end" }}>
                   <Text
-                    style={{ fontSize: 14, fontWeight: "600", color: "#111" }}
+                    style={{
+                      fontSize: 14,
+                      fontWeight: "600",
+                      color: colors.text,
+                    }}
                   >
                     {charger.start_price > 0
                       ? `$${charger.start_price}/kWh`
@@ -218,37 +298,67 @@ export default function DetailsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Operating Hours</Text>
-          <View style={styles.hoursCard}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Operating Hours
+          </Text>
+          <View style={[styles.hoursCard, { backgroundColor: colors.card }]}>
             <View style={styles.openNow}>
               <CheckCircle size={20} color="#10b981" strokeWidth={2} />
               <Text style={styles.openNowText}>Info</Text>
             </View>
-            <Text style={styles.hoursText}>{station.opening_hours}</Text>
+            <Text style={[styles.hoursText, { color: colors.textSecondary }]}>
+              {station.opening_hours}
+            </Text>
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Amenities</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Amenities
+          </Text>
           <View style={styles.amenitiesGrid}>
             {station.amenities?.map((am: string, idx: number) => (
-              <View key={idx} style={styles.amenityItem}>
-                <Coffee size={20} color="#6b7280" strokeWidth={2} />
-                <Text style={styles.amenityText}>{am}</Text>
+              <View
+                key={idx}
+                style={[styles.amenityItem, { backgroundColor: colors.card }]}
+              >
+                <Coffee
+                  size={20}
+                  color={colors.textSecondary}
+                  strokeWidth={2}
+                />
+                <Text
+                  style={[styles.amenityText, { color: colors.textSecondary }]}
+                >
+                  {am}
+                </Text>
               </View>
             ))}
             {(!station.amenities || station.amenities.length === 0) && (
-              <Text>No amenities listed.</Text>
+              <Text style={{ color: colors.textSecondary }}>
+                No amenities listed.
+              </Text>
             )}
           </View>
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Location</Text>
-          <View style={styles.mapPlaceholder}>
-            <MapPin size={48} color="#9ca3af" strokeWidth={2} />
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Location
+          </Text>
+          <View
+            style={[
+              styles.mapPlaceholder,
+              { backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6" },
+            ]}
+          >
+            <MapPin size={48} color={colors.textSecondary} strokeWidth={2} />
           </View>
-          <Text style={styles.locationAddress}>{station.address}</Text>
+          <Text
+            style={[styles.locationAddress, { color: colors.textSecondary }]}
+          >
+            {station.address}
+          </Text>
         </View>
 
         <View style={styles.actions}>
@@ -259,9 +369,16 @@ export default function DetailsScreen() {
             <MapPin size={20} color="#fff" strokeWidth={2} />
             <Text style={styles.navigateButtonText}>Navigate</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.shareButton}>
-            <Share2 size={20} color="#374151" strokeWidth={2} />
-            <Text style={styles.shareButtonText}>Share</Text>
+          <TouchableOpacity
+            style={[
+              styles.shareButton,
+              { backgroundColor: theme === "dark" ? "#374151" : "#f3f4f6" },
+            ]}
+          >
+            <Share2 size={20} color={colors.text} strokeWidth={2} />
+            <Text style={[styles.shareButtonText, { color: colors.text }]}>
+              Share
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -272,7 +389,6 @@ export default function DetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   imageContainer: {
     position: "relative",

@@ -13,10 +13,12 @@ import { MapPin, List, Zap, ShoppingBag, Wrench } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function HomeScreen() {
   const router = useRouter();
   const { location, refreshLocation } = useAuth();
+  const { colors, theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const [stations, setStations] = useState<any[]>([]);
   const [mapStations, setMapStations] = useState<any[]>([]);
@@ -287,7 +289,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.mapContainer}>
         <WebView
           ref={webViewRef}
@@ -298,7 +300,10 @@ export default function HomeScreen() {
         />
 
         <TouchableOpacity
-          style={[styles.locationButton, { top: 380 + insets.top }]}
+          style={[
+            styles.locationButton,
+            { top: 380 + insets.top, backgroundColor: colors.card },
+          ]}
           onPress={async () => {
             const loc = await refreshLocation();
             if (loc && webViewRef.current) {
@@ -320,22 +325,33 @@ export default function HomeScreen() {
             }
           }}
         >
-          <MapPin size={24} color="#374151" strokeWidth={2} />
+          <MapPin size={24} color={colors.text} strokeWidth={2} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.listButton}
+          style={[styles.listButton, { backgroundColor: colors.card }]}
           onPress={() => router.push("/listing")}
         >
-          <List size={20} color="#374151" strokeWidth={2} />
-          <Text style={styles.listButtonText}>List View</Text>
+          <List size={20} color={colors.text} strokeWidth={2} />
+          <Text style={[styles.listButtonText, { color: colors.text }]}>
+            List View
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.bottomSheet}>
+      <View
+        style={[
+          styles.bottomSheet,
+          { backgroundColor: colors.card, borderTopColor: colors.border },
+        ]}
+      >
         <View style={styles.bottomSheetHeader}>
-          <Text style={styles.bottomSheetTitle}>Nearby Stations</Text>
-          <Text style={styles.stationCount}>{stations.length} found</Text>
+          <Text style={[styles.bottomSheetTitle, { color: colors.text }]}>
+            Nearby Stations
+          </Text>
+          <Text style={[styles.stationCount, { color: colors.textSecondary }]}>
+            {stations.length} found
+          </Text>
         </View>
 
         <ScrollView
@@ -345,7 +361,10 @@ export default function HomeScreen() {
           {stations.map((station) => (
             <TouchableOpacity
               key={station.id}
-              style={styles.stationCard}
+              style={[
+                styles.stationCard,
+                { backgroundColor: theme === "dark" ? "#374151" : "#f9fafb" },
+              ]}
               onPress={() =>
                 router.push({
                   pathname:
@@ -358,7 +377,12 @@ export default function HomeScreen() {
                 })
               }
             >
-              <View style={styles.stationIcon}>
+              <View
+                style={[
+                  styles.stationIcon,
+                  { backgroundColor: theme === "dark" ? "#1f2937" : "#ecfdf5" },
+                ]}
+              >
                 {station.place_type === "SHOWROOM" ? (
                   <ShoppingBag size={24} color="#3b82f6" strokeWidth={2} />
                 ) : station.place_type === "SERVICE" ? (
@@ -368,7 +392,9 @@ export default function HomeScreen() {
                 )}
               </View>
               <View style={styles.stationInfo}>
-                <Text style={styles.stationName}>{station.name}</Text>
+                <Text style={[styles.stationName, { color: colors.text }]}>
+                  {station.name}
+                </Text>
                 <Text
                   style={[
                     styles.stationOperator,
@@ -378,7 +404,12 @@ export default function HomeScreen() {
                 >
                   {station.operator}
                 </Text>
-                <Text style={styles.stationAddress}>
+                <Text
+                  style={[
+                    styles.stationAddress,
+                    { color: colors.textSecondary },
+                  ]}
+                >
                   {station.distance
                     ? station.distance.toFixed(1) + " km"
                     : "N/A"}{" "}
@@ -389,6 +420,10 @@ export default function HomeScreen() {
                 <View
                   style={[
                     styles.availableBadge,
+                    // Keep light background for badges for contrast, or adjust
+                    {
+                      backgroundColor: theme === "dark" ? "#1f2937" : "#ecfdf5",
+                    },
                     station.status !== "ACTIVE" && {
                       backgroundColor: "#fee2e2",
                     },
@@ -411,7 +446,9 @@ export default function HomeScreen() {
                     {station.status === "ACTIVE" ? "Available" : "Busy"}
                   </Text>
                 </View>
-                <Text style={styles.stationPrice}>
+                <Text
+                  style={[styles.stationPrice, { color: colors.textSecondary }]}
+                >
                   {station.place_type === "SHOWROOM"
                     ? "Showroom"
                     : station.place_type === "SERVICE"
@@ -430,7 +467,6 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   mapContainer: {
     flex: 1,
@@ -438,9 +474,7 @@ const styles = StyleSheet.create({
   },
   locationButton: {
     position: "absolute",
-    top: 380,
     right: 16,
-    backgroundColor: "#fff",
     padding: 12,
     borderRadius: 12,
     shadowColor: "#000",
@@ -456,7 +490,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#fff",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 24,
@@ -469,12 +502,9 @@ const styles = StyleSheet.create({
   },
   listButtonText: {
     fontSize: 14,
-    color: "#374151",
   },
   bottomSheet: {
-    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
     padding: 16,
   },
   bottomSheetHeader: {
@@ -486,11 +516,9 @@ const styles = StyleSheet.create({
   bottomSheetTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
   },
   stationCount: {
     fontSize: 14,
-    color: "#6b7280",
   },
   stationList: {
     maxHeight: 192,
@@ -500,14 +528,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 12,
-    backgroundColor: "#f9fafb",
     borderRadius: 12,
     marginBottom: 12,
   },
   stationIcon: {
     width: 48,
     height: 48,
-    backgroundColor: "#ecfdf5",
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
@@ -518,7 +544,6 @@ const styles = StyleSheet.create({
   stationName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   stationOperator: {
@@ -529,13 +554,11 @@ const styles = StyleSheet.create({
   },
   stationAddress: {
     fontSize: 14,
-    color: "#6b7280",
   },
   stationMeta: {
     alignItems: "flex-end",
   },
   availableBadge: {
-    backgroundColor: "#ecfdf5",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
@@ -548,6 +571,5 @@ const styles = StyleSheet.create({
   },
   stationPrice: {
     fontSize: 12,
-    color: "#9ca3af",
   },
 });

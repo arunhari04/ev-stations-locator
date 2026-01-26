@@ -20,10 +20,12 @@ import {
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { api } from "@/services/api";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function SearchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const { colors, theme } = useTheme();
   const [searchQuery, setSearchQuery] = useState((params.q as string) || "");
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -50,23 +52,37 @@ export default function SearchScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View
+        style={[
+          styles.header,
+          { paddingTop: insets.top, borderBottomColor: colors.border },
+        ]}
+      >
         <TouchableOpacity onPress={() => router.back()}>
-          <ChevronLeft size={24} color="#6b7280" strokeWidth={2} />
+          <ChevronLeft size={24} color={colors.textSecondary} strokeWidth={2} />
         </TouchableOpacity>
-        <View style={styles.searchBar}>
-          <SearchIcon size={20} color="#9ca3af" strokeWidth={2} />
+        <View
+          style={[
+            styles.searchBar,
+            { backgroundColor: theme === "dark" ? "#374151" : "#f9fafb" },
+          ]}
+        >
+          <SearchIcon size={20} color={colors.textSecondary} strokeWidth={2} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search stations, locations..."
+            placeholderTextColor={colors.textSecondary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoFocus
           />
         </View>
         <TouchableOpacity
-          style={styles.filterButton}
+          style={[
+            styles.filterButton,
+            { backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5" },
+          ]}
           onPress={() => router.push("/filters")}
         >
           <SlidersHorizontal size={20} color="#10b981" strokeWidth={2} />
@@ -84,7 +100,11 @@ export default function SearchScreen() {
 
         {!loading && results.length === 0 && searchQuery.length > 0 && (
           <Text
-            style={{ textAlign: "center", marginTop: 20, color: "#9ca3af" }}
+            style={{
+              textAlign: "center",
+              marginTop: 20,
+              color: colors.textSecondary,
+            }}
           >
             No stations found.
           </Text>
@@ -92,12 +112,14 @@ export default function SearchScreen() {
 
         {results.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Results</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Results
+            </Text>
             <View style={styles.recentList}>
               {results.map((station: any) => (
                 <TouchableOpacity
                   key={station.id}
-                  style={styles.recentItem}
+                  style={[styles.recentItem, { backgroundColor: colors.card }]}
                   onPress={() =>
                     router.push({
                       pathname:
@@ -118,7 +140,9 @@ export default function SearchScreen() {
                     <Zap size={20} color="#10b981" strokeWidth={2} />
                   )}
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.recentText}>{station.name}</Text>
+                    <Text style={[styles.recentText, { color: colors.text }]}>
+                      {station.name}
+                    </Text>
                     <Text
                       style={[
                         {
@@ -136,7 +160,7 @@ export default function SearchScreen() {
                     >
                       {station.operator}
                     </Text>
-                    <Text style={{ fontSize: 12, color: "#6b7280" }}>
+                    <Text style={{ fontSize: 12, color: colors.textSecondary }}>
                       {station.address}
                     </Text>
                   </View>
@@ -153,7 +177,6 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   header: {
     flexDirection: "row",
@@ -161,19 +184,16 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   searchBar: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#f9fafb",
     borderRadius: 12,
     padding: 12,
   },
   filterButton: {
-    backgroundColor: "#ecfdf5",
     padding: 12,
     borderRadius: 12,
     justifyContent: "center",
@@ -182,7 +202,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: "#374151",
   },
   content: {
     flex: 1,
@@ -194,7 +213,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 12,
   },
   recentList: {
@@ -205,13 +223,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     padding: 12,
-    backgroundColor: "#f9fafb",
     borderRadius: 12,
   },
   recentText: {
     flex: 1,
     fontSize: 16,
-    color: "#374151",
   },
   locationGrid: {
     flexDirection: "row",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,30 +9,90 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { ArrowLeft, Camera, User, Mail, Phone } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { api } from "../services/api";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function EditProfileScreen() {
   const router = useRouter();
+  const { refreshUser } = useAuth();
+  const { colors, theme } = useTheme();
+  const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
 
-  // Mock User Data
+  // User Data State
   const [form, setForm] = useState({
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+91 98765 43210",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
   });
 
-  const handleSave = () => {
-    // Save logic here
-    router.back();
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  const loadProfile = async () => {
+    try {
+      const user = await api.getProfile();
+      setForm({
+        firstName: user.first_name || "",
+        lastName: user.last_name || "",
+        email: user.email || "",
+        phone: user.phone_number || "",
+      });
+    } catch (error) {
+      Alert.alert("Error", "Failed to load profile");
+    } finally {
+      setInitialLoading(false);
+    }
   };
 
+  const handleSave = async () => {
+    try {
+      setLoading(true);
+      const payload = {
+        first_name: form.firstName,
+        last_name: form.lastName,
+        phone_number: form.phone,
+      };
+      await api.updateProfile(payload);
+      await refreshUser(); // Refresh global user state
+      Alert.alert("Success", "Profile updated successfully", [
+        { text: "OK", onPress: () => router.back() },
+      ]);
+    } catch (error) {
+      Alert.alert("Error", "Failed to update profile");
+      setLoading(false);
+    }
+  };
+
+  if (initialLoading) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: colors.background,
+          },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#10b981" />
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={["#10b981", "#059669"]} style={styles.header}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.headerContent}>
@@ -43,8 +103,12 @@ export default function EditProfileScreen() {
               <ArrowLeft size={24} color="#fff" />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Edit Profile</Text>
-            <TouchableOpacity onPress={handleSave}>
-              <Text style={styles.saveText}>Save</Text>
+            <TouchableOpacity onPress={handleSave} disabled={loading}>
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.saveText}>Save</Text>
+              )}
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -60,7 +124,7 @@ export default function EditProfileScreen() {
             <View style={styles.avatarContainer}>
               <Image
                 source={{ uri: "https://via.placeholder.com/150" }}
-                style={styles.avatar}
+                style={[styles.avatar, { borderColor: colors.card }]}
               />
               <TouchableOpacity style={styles.cameraBtn}>
                 <Camera size={20} color="#fff" />
@@ -72,51 +136,99 @@ export default function EditProfileScreen() {
           {/* Form Section */}
           <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>First Name</Text>
-              <View style={styles.inputContainer}>
-                <User size={20} color="#9ca3af" />
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                First Name
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <User size={20} color={colors.textSecondary} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   value={form.firstName}
                   onChangeText={(t) => setForm({ ...form, firstName: t })}
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Last Name</Text>
-              <View style={styles.inputContainer}>
-                <User size={20} color="#9ca3af" />
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Last Name
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <User size={20} color={colors.textSecondary} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   value={form.lastName}
                   onChangeText={(t) => setForm({ ...form, lastName: t })}
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={[styles.inputContainer, styles.disabledInput]}>
-                <Mail size={20} color="#9ca3af" />
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Email Address
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  styles.disabledInput,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: theme === "dark" ? "#1f2937" : "#f3f4f6",
+                  },
+                ]}
+              >
+                <Mail size={20} color={colors.textSecondary} />
                 <TextInput
-                  style={[styles.input, { color: "#6b7280" }]}
+                  style={[styles.input, { color: colors.textSecondary }]}
                   value={form.email}
                   editable={false}
                 />
               </View>
-              <Text style={styles.helperText}>Email cannot be changed</Text>
+              <Text
+                style={[styles.helperText, { color: colors.textSecondary }]}
+              >
+                Email cannot be changed
+              </Text>
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
-              <View style={styles.inputContainer}>
-                <Phone size={20} color="#9ca3af" />
+              <Text style={[styles.label, { color: colors.textSecondary }]}>
+                Phone Number
+              </Text>
+              <View
+                style={[
+                  styles.inputContainer,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                  },
+                ]}
+              >
+                <Phone size={20} color={colors.textSecondary} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { color: colors.text }]}
                   value={form.phone}
                   onChangeText={(t) => setForm({ ...form, phone: t })}
                   keyboardType="phone-pad"
+                  placeholderTextColor={colors.textSecondary}
                 />
               </View>
             </View>
@@ -128,7 +240,7 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1 },
   header: {
     paddingBottom: 24,
     borderBottomLeftRadius: 24,
@@ -157,7 +269,6 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     backgroundColor: "#e5e7eb",
     borderWidth: 4,
-    borderColor: "#fff",
   },
   cameraBtn: {
     position: "absolute",
@@ -172,19 +283,17 @@ const styles = StyleSheet.create({
   changePhotoText: { marginTop: 12, color: "#10b981", fontWeight: "600" },
   form: { gap: 20 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: "600", color: "#374151" },
+  label: { fontSize: 14, fontWeight: "600" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 50,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
     gap: 12,
   },
-  input: { flex: 1, fontSize: 16, color: "#111" },
-  disabledInput: { backgroundColor: "#f3f4f6" },
-  helperText: { fontSize: 12, color: "#9ca3af", marginLeft: 4 },
+  input: { flex: 1, fontSize: 16 },
+  disabledInput: {},
+  helperText: { fontSize: 12, marginLeft: 4 },
 });

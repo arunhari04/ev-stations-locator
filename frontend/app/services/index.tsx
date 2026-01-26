@@ -11,9 +11,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Store, Wrench, ArrowLeft } from "lucide-react-native";
+import { useTheme } from "@/context/ThemeContext";
 
 export default function ServicesScreen() {
   const router = useRouter();
+  const { colors, theme } = useTheme();
 
   const services = [
     {
@@ -39,7 +41,7 @@ export default function ServicesScreen() {
   ];
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={["#10b981", "#059669"]} style={styles.header}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.headerContent}>
@@ -56,7 +58,7 @@ export default function ServicesScreen() {
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageSubtitle}>
+        <Text style={[styles.pageSubtitle, { color: colors.textSecondary }]}>
           Find everything for your electric vehicle
         </Text>
 
@@ -64,7 +66,7 @@ export default function ServicesScreen() {
           {services.map((service) => (
             <TouchableOpacity
               key={service.id}
-              style={styles.serviceCard}
+              style={[styles.serviceCard, { backgroundColor: colors.card }]}
               onPress={() => {
                 if (service.id === "showrooms")
                   router.push("/services/showrooms");
@@ -75,51 +77,105 @@ export default function ServicesScreen() {
               <View
                 style={[
                   styles.iconContainer,
-                  { backgroundColor: service.bgColor },
+                  {
+                    backgroundColor:
+                      theme === "dark" ? `${service.color}15` : service.bgColor,
+                  },
                 ]}
               >
                 <service.icon size={40} color={service.color} strokeWidth={2} />
               </View>
-              <Text style={styles.serviceTitle}>{service.title}</Text>
-              <Text style={styles.serviceSubtitle}>{service.subtitle}</Text>
-              <Text style={styles.serviceDescription}>
+              <Text style={[styles.serviceTitle, { color: colors.text }]}>
+                {service.title}
+              </Text>
+              <Text
+                style={[
+                  styles.serviceSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
+                {service.subtitle}
+              </Text>
+              <Text
+                style={[
+                  styles.serviceDescription,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 {service.description}
               </Text>
               <View style={styles.cardFooter}>
-                <Text style={styles.countBadge}>{service.count}</Text>
-                <Text style={styles.arrow}>→</Text>
+                <Text
+                  style={[
+                    styles.countBadge,
+                    {
+                      backgroundColor: theme === "dark" ? "#064e3b" : "#ecfdf5",
+                    },
+                  ]}
+                >
+                  {service.count}
+                </Text>
+                <Text style={[styles.arrow, { color: colors.textSecondary }]}>
+                  →
+                </Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={styles.quickAccessSection}>
-          <Text style={styles.sectionTitle}>Quick Access</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Quick Access
+          </Text>
           <TouchableOpacity
-            style={styles.quickAccessCard}
+            style={[styles.quickAccessCard, { backgroundColor: colors.card }]}
             onPress={() => router.push("/services/showrooms")}
           >
-            <View style={styles.quickAccessIcon}>
+            <View
+              style={[
+                styles.quickAccessIcon,
+                { backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb" },
+              ]}
+            >
               <Store size={24} color="#3b82f6" strokeWidth={2} />
             </View>
             <View style={styles.quickAccessContent}>
-              <Text style={styles.quickAccessTitle}>Latest EV Models</Text>
-              <Text style={styles.quickAccessSubtitle}>
+              <Text style={[styles.quickAccessTitle, { color: colors.text }]}>
+                Latest EV Models
+              </Text>
+              <Text
+                style={[
+                  styles.quickAccessSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 Explore 2024-2025 models at showrooms
               </Text>
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.quickAccessCard}
+            style={[styles.quickAccessCard, { backgroundColor: colors.card }]}
             onPress={() => router.push("/services/service-stations")}
           >
-            <View style={styles.quickAccessIcon}>
+            <View
+              style={[
+                styles.quickAccessIcon,
+                { backgroundColor: theme === "dark" ? "#1f2937" : "#f9fafb" },
+              ]}
+            >
               <Wrench size={24} color="#f59e0b" strokeWidth={2} />
             </View>
             <View style={styles.quickAccessContent}>
-              <Text style={styles.quickAccessTitle}>Regular Maintenance</Text>
-              <Text style={styles.quickAccessSubtitle}>
+              <Text style={[styles.quickAccessTitle, { color: colors.text }]}>
+                Regular Maintenance
+              </Text>
+              <Text
+                style={[
+                  styles.quickAccessSubtitle,
+                  { color: colors.textSecondary },
+                ]}
+              >
                 Schedule your EV check-up today
               </Text>
             </View>
@@ -127,23 +183,33 @@ export default function ServicesScreen() {
         </View>
 
         <View style={styles.infoSection}>
-          <Text style={styles.sectionTitle}>Why Choose Our Services?</Text>
-          <View style={styles.infoCard}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Why Choose Our Services?
+          </Text>
+          <View style={[styles.infoCard, { backgroundColor: colors.card }]}>
             <View style={styles.infoBullet}>
               <Text style={styles.bulletNumber}>✓</Text>
-              <Text style={styles.bulletText}>Certified EV Specialists</Text>
+              <Text style={[styles.bulletText, { color: colors.text }]}>
+                Certified EV Specialists
+              </Text>
             </View>
             <View style={styles.infoBullet}>
               <Text style={styles.bulletNumber}>✓</Text>
-              <Text style={styles.bulletText}>Genuine Parts & Warranty</Text>
+              <Text style={[styles.bulletText, { color: colors.text }]}>
+                Genuine Parts & Warranty
+              </Text>
             </View>
             <View style={styles.infoBullet}>
               <Text style={styles.bulletNumber}>✓</Text>
-              <Text style={styles.bulletText}>Fast & Reliable Service</Text>
+              <Text style={[styles.bulletText, { color: colors.text }]}>
+                Fast & Reliable Service
+              </Text>
             </View>
             <View style={styles.infoBullet}>
               <Text style={styles.bulletNumber}>✓</Text>
-              <Text style={styles.bulletText}>Competitive Pricing</Text>
+              <Text style={[styles.bulletText, { color: colors.text }]}>
+                Competitive Pricing
+              </Text>
             </View>
           </View>
         </View>
@@ -155,7 +221,6 @@ export default function ServicesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f9fafb",
   },
   header: {
     paddingBottom: 24,
@@ -180,7 +245,6 @@ const styles = StyleSheet.create({
   },
   pageSubtitle: {
     fontSize: 16,
-    color: "#6b7280",
     paddingHorizontal: 20,
     marginTop: 20,
     marginBottom: 10,
@@ -193,7 +257,6 @@ const styles = StyleSheet.create({
   },
   serviceCard: {
     width: "48%",
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
@@ -213,18 +276,15 @@ const styles = StyleSheet.create({
   serviceTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 4,
   },
   serviceSubtitle: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#6b7280",
     marginBottom: 8,
   },
   serviceDescription: {
     fontSize: 12,
-    color: "#9ca3af",
     marginBottom: 12,
     lineHeight: 16,
   },
@@ -237,14 +297,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "600",
     color: "#10b981",
-    backgroundColor: "#ecfdf5",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
   arrow: {
     fontSize: 16,
-    color: "#d1d5db",
   },
   quickAccessSection: {
     padding: 16,
@@ -252,14 +310,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
     marginBottom: 12,
   },
   quickAccessCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
@@ -273,7 +329,6 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#f9fafb",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -283,19 +338,16 @@ const styles = StyleSheet.create({
   quickAccessTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#111",
     marginBottom: 2,
   },
   quickAccessSubtitle: {
     fontSize: 12,
-    color: "#6b7280",
   },
   infoSection: {
     padding: 16,
     paddingBottom: 32,
   },
   infoCard: {
-    backgroundColor: "#fff",
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -312,6 +364,5 @@ const styles = StyleSheet.create({
   },
   bulletText: {
     fontSize: 14,
-    color: "#374151",
   },
 });

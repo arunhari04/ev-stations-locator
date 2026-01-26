@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,27 +7,87 @@ import {
   Switch,
   ScrollView,
   Platform,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   ArrowLeft,
-  Bell,
   Moon,
   MapPin,
   Globe,
   Shield,
   ChevronRight,
+  FileText,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
+import { api } from "../services/api";
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const { user, refreshUser, requestLocationAccess } = useAuth();
+  const { theme, toggleTheme, colors } = useTheme();
 
-  // Mock States
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [locationEnabled, setLocationEnabled] = useState(true);
+  // Local state initialized from user context
+  const [darkMode, setDarkMode] = useState(user?.is_dark_mode || false);
+  const [locationEnabled, setLocationEnabled] = useState(
+    user?.allow_location_tracking ?? true,
+  );
+
+  // Sync local state when user updates (e.g. after refresh)
+  useEffect(() => {
+    if (user) {
+      setDarkMode(user.is_dark_mode);
+      setLocationEnabled(user.allow_location_tracking);
+    }
+  }, [user]);
+
+  const handleTogglePreference = async (
+    key: string,
+    value: boolean,
+    setter: (val: boolean) => void,
+  ) => {
+    // Special handling for Location
+    if (key === "allow_location_tracking" && value === true) {
+      const granted = await requestLocationAccess();
+      if (!granted) {
+        Alert.alert(
+          "Permission Required",
+          "Please enable location permissions in your device settings to use this feature.",
+        );
+        return; // Do not update state or backend
+      }
+    }
+
+    // Special handling for Dark Mode - toggle theme context immediately
+    if (key === "is_dark_mode") {
+      toggleTheme();
+    }
+
+    // Optimistic update
+    setter(value);
+
+    try {
+      await api.updateProfile({ [key]: value });
+      await refreshUser();
+    } catch (error) {
+      // Revert on failure
+      setter(!value);
+      // Revert theme if failed
+      if (key === "is_dark_mode") toggleTheme();
+      Alert.alert("Error", "Failed to update preference");
+    }
+  };
+
+  const handleLanguagePress = () => {
+    Alert.alert("Select Language", "Choose your preferred language", [
+      { text: "English (Default)", style: "default" },
+      { text: "Cancel", style: "cancel" },
+    ]);
+  };
 
   interface SettingItemProps {
     icon: any;
@@ -35,6 +95,7 @@ export default function SettingsScreen() {
     type?: "link" | "toggle";
     value?: boolean;
     onToggle?: (val: boolean) => void;
+    onPress?: () => void;
     color?: string;
   }
 
@@ -44,33 +105,42 @@ export default function SettingsScreen() {
     type = "link",
     value,
     onToggle,
+    onPress,
     color = "#6b7280",
-  }: SettingItemProps) => (
-    <View style={styles.itemContainer}>
-      <View style={styles.itemLeft}>
-        <View style={[styles.iconBg, { backgroundColor: `${color}15` }]}>
-          <Icon size={20} color={color} />
+  }: SettingItemProps) => {
+    const Content = (
+      <View style={styles.itemContainer}>
+        <View style={styles.itemLeft}>
+          <View style={[styles.iconBg, { backgroundColor: `${color}15` }]}>
+            <Icon size={20} color={color} />
+          </View>
+          <Text style={[styles.itemLabel, { color: colors.text }]}>
+            {label}
+          </Text>
         </View>
-        <Text style={styles.itemLabel}>{label}</Text>
-      </View>
 
-      {type === "toggle" ? (
-        <Switch
-          trackColor={{ false: "#d1d5db", true: "#10b981" }}
-          thumbColor={"#fff"}
-          onValueChange={onToggle}
-          value={value}
-        />
-      ) : (
-        <TouchableOpacity>
-          <ChevronRight size={20} color="#9ca3af" />
-        </TouchableOpacity>
-      )}
-    </View>
-  );
+        {type === "toggle" ? (
+          <Switch
+            trackColor={{ false: "#d1d5db", true: "#10b981" }}
+            thumbColor={"#fff"}
+            onValueChange={onToggle}
+            value={value}
+          />
+        ) : (
+          <ChevronRight size={20} color={colors.textSecondary} />
+        )}
+      </View>
+    );
+
+    if (type === "toggle") {
+      return Content;
+    }
+
+    return <TouchableOpacity onPress={onPress}>{Content}</TouchableOpacity>;
+  };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={["#10b981", "#059669"]} style={styles.header}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.headerContent}>
@@ -89,58 +159,66 @@ export default function SettingsScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Preferences</Text>
-          <View style={styles.card}>
-            <SettingItem
-              icon={Bell}
-              label="Push Notifications"
-              type="toggle"
-              value={pushEnabled}
-              onToggle={setPushEnabled}
-              color="#f59e0b"
-            />
-            <View style={styles.divider} />
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <SettingItem
               icon={Moon}
               label="Dark Mode"
               type="toggle"
               value={darkMode}
-              onToggle={setDarkMode}
+              onToggle={(val) =>
+                handleTogglePreference("is_dark_mode", val, setDarkMode)
+              }
               color="#6366f1"
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingItem
               icon={Globe}
               label="Language"
               type="link"
               color="#3b82f6"
+              onPress={handleLanguagePress}
             />
           </View>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionHeader}>Privacy & Permissions</Text>
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: colors.card }]}>
             <SettingItem
               icon={MapPin}
               label="Location Access"
               type="toggle"
               value={locationEnabled}
-              onToggle={setLocationEnabled}
+              onToggle={(val) =>
+                handleTogglePreference(
+                  "allow_location_tracking",
+                  val,
+                  setLocationEnabled,
+                )
+              }
               color="#ef4444"
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingItem
               icon={Shield}
               label="Privacy Policy"
               type="link"
               color="#10b981"
+              onPress={() => router.push("/privacy-policy")}
             />
-            <View style={styles.divider} />
+            <View
+              style={[styles.divider, { backgroundColor: colors.border }]}
+            />
             <SettingItem
-              icon={Shield}
+              icon={FileText}
               label="Terms of Service"
               type="link"
               color="#10b981"
+              onPress={() => router.push("/terms-of-service")}
             />
           </View>
         </View>
@@ -152,7 +230,7 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f3f4f6" },
+  container: { flex: 1 },
   header: {
     paddingBottom: 20,
     borderBottomLeftRadius: 24,
@@ -182,7 +260,6 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
   },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     paddingHorizontal: 16,
     shadowColor: "#000",
@@ -203,8 +280,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  itemLabel: { fontSize: 16, color: "#1f2937", fontWeight: "500" },
-  divider: { height: 1, backgroundColor: "#f3f4f6" },
+  itemLabel: { fontSize: 16, fontWeight: "500" },
+  divider: { height: 1 },
   version: {
     textAlign: "center",
     color: "#9ca3af",

@@ -24,6 +24,7 @@ import {
 } from "lucide-react-native";
 import { useState, useEffect } from "react";
 import { api } from "../services/api";
+import { useTheme } from "@/context/ThemeContext";
 
 const getAmenityIcon = (name: string) => {
   const n = name.toLowerCase();
@@ -40,6 +41,7 @@ export default function ServiceStationDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const id = params.id as string;
+  const { colors, theme } = useTheme();
 
   const [station, setStation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -109,7 +111,13 @@ export default function ServiceStationDetailsScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View
+        style={[
+          styles.container,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <ActivityIndicator size="large" color="#f59e0b" />
       </View>
     );
@@ -117,7 +125,13 @@ export default function ServiceStationDetailsScreen() {
 
   if (error || !station) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View
+        style={[
+          styles.container,
+          styles.center,
+          { backgroundColor: colors.background },
+        ]}
+      >
         <Text style={styles.errorText}>{error || "Station not found"}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={loadStation}>
           <Text style={styles.retryText}>Retry</Text>
@@ -141,18 +155,33 @@ export default function ServiceStationDetailsScreen() {
       : "https://images.pexels.com/photos/3803518/pexels-photo-3803518.jpeg?auto=compress&cs=tinysrgb&w=1200";
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.imageContainer}>
         <Image source={{ uri: imageUrl }} style={styles.image} />
         <TouchableOpacity
-          style={styles.backButton}
+          style={[
+            styles.backButton,
+            {
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.3)",
+            },
+          ]}
           onPress={() => router.back()}
         >
           <ChevronLeft size={24} color="#fff" strokeWidth={2} />
         </TouchableOpacity>
         {/* Favorite functionality can be added here if needed, keeping UI for now */}
         <TouchableOpacity
-          style={styles.favoriteButton}
+          style={[
+            styles.favoriteButton,
+            {
+              backgroundColor:
+                theme === "dark" ? "rgba(0,0,0,0.5)" : "rgba(0,0,0,0.3)",
+            },
+          ]}
           onPress={toggleFavorite}
         >
           <Heart
@@ -167,7 +196,9 @@ export default function ServiceStationDetailsScreen() {
       <View style={styles.content}>
         <View style={styles.header}>
           <View style={styles.titleContainer}>
-            <Text style={styles.stationName}>{station.name}</Text>
+            <Text style={[styles.stationName, { color: colors.text }]}>
+              {station.name}
+            </Text>
           </View>
           {/* Distance if available */}
           {station.distance != null && (
@@ -178,21 +209,39 @@ export default function ServiceStationDetailsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Information</Text>
-          <TouchableOpacity style={styles.contactItem} onPress={handleMaps}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Contact Information
+          </Text>
+          <TouchableOpacity
+            style={[styles.contactItem, { backgroundColor: colors.card }]}
+            onPress={handleMaps}
+          >
             <MapPin size={20} color="#f59e0b" strokeWidth={2} />
             <View style={styles.contactContent}>
-              <Text style={styles.contactLabel}>Address</Text>
-              <Text style={styles.contactValue}>{station.address}</Text>
+              <Text
+                style={[styles.contactLabel, { color: colors.textSecondary }]}
+              >
+                Address
+              </Text>
+              <Text style={[styles.contactValue, { color: colors.text }]}>
+                {station.address}
+              </Text>
             </View>
           </TouchableOpacity>
 
           {station.operator?.phone && (
-            <TouchableOpacity style={styles.contactItem} onPress={handleCall}>
+            <TouchableOpacity
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
+              onPress={handleCall}
+            >
               <Phone size={20} color="#f59e0b" strokeWidth={2} />
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Phone</Text>
-                <Text style={styles.contactValue}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Phone
+                </Text>
+                <Text style={[styles.contactValue, { color: colors.text }]}>
                   {station.operator.phone}
                 </Text>
               </View>
@@ -200,11 +249,18 @@ export default function ServiceStationDetailsScreen() {
           )}
 
           {station.operator?.email && (
-            <TouchableOpacity style={styles.contactItem} onPress={handleEmail}>
+            <TouchableOpacity
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
+              onPress={handleEmail}
+            >
               <Mail size={20} color="#f59e0b" strokeWidth={2} />
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Email</Text>
-                <Text style={styles.contactValue}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Email
+                </Text>
+                <Text style={[styles.contactValue, { color: colors.text }]}>
                   {station.operator.email}
                 </Text>
               </View>
@@ -213,13 +269,20 @@ export default function ServiceStationDetailsScreen() {
 
           {station.operator?.website && (
             <TouchableOpacity
-              style={styles.contactItem}
+              style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={() => Linking.openURL(station.operator.website)}
             >
               <Text style={{ fontSize: 20 }}>🌐</Text>
               <View style={styles.contactContent}>
-                <Text style={styles.contactLabel}>Website</Text>
-                <Text style={styles.contactValue} numberOfLines={1}>
+                <Text
+                  style={[styles.contactLabel, { color: colors.textSecondary }]}
+                >
+                  Website
+                </Text>
+                <Text
+                  style={[styles.contactValue, { color: colors.text }]}
+                  numberOfLines={1}
+                >
                   {station.operator.website}
                 </Text>
               </View>
@@ -228,14 +291,23 @@ export default function ServiceStationDetailsScreen() {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Operating Hours</Text>
-          <View style={styles.hoursCard}>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Operating Hours
+          </Text>
+          <View
+            style={[
+              styles.hoursCard,
+              { backgroundColor: theme === "dark" ? "#FEF3C720" : "#fffbeb" },
+            ]}
+          >
             <Clock size={20} color="#f59e0b" strokeWidth={2} />
             <View style={styles.hoursContent}>
-              <Text style={styles.hoursTitle}>
+              <Text style={[styles.hoursTitle, { color: colors.text }]}>
                 {station.opening_hours || "Contact for hours"}
               </Text>
-              <Text style={styles.hoursSubtitle}>
+              <Text
+                style={[styles.hoursSubtitle, { color: colors.textSecondary }]}
+              >
                 {station.status === "ACTIVE"
                   ? "Open"
                   : station.status || "Unknown"}
@@ -248,14 +320,21 @@ export default function ServiceStationDetailsScreen() {
 
         {station.amenities && station.amenities.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Facilities & Amenities</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              Facilities & Amenities
+            </Text>
             <View style={styles.amenitiesGrid}>
               {station.amenities.map((amenity: string, index: number) => (
-                <View key={index} style={styles.amenityItem}>
+                <View
+                  key={index}
+                  style={[styles.amenityItem, { backgroundColor: colors.card }]}
+                >
                   <View style={styles.amenityIconContainer}>
                     {getAmenityIcon(amenity)}
                   </View>
-                  <Text style={styles.amenityText}>{amenity}</Text>
+                  <Text style={[styles.amenityText, { color: colors.text }]}>
+                    {amenity}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -282,7 +361,6 @@ export default function ServiceStationDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   center: {
     justifyContent: "center",

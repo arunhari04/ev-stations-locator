@@ -19,6 +19,7 @@ import {
   MessageCircle,
 } from "lucide-react-native";
 import { useRouter } from "expo-router";
+import { useTheme } from "../context/ThemeContext";
 
 const FAQS = [
   {
@@ -45,6 +46,7 @@ const FAQS = [
 
 export default function HelpSupportScreen() {
   const router = useRouter();
+  const { colors, theme } = useTheme();
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const toggleExpand = (index: number) => {
@@ -57,7 +59,7 @@ export default function HelpSupportScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <LinearGradient colors={["#10b981", "#059669"]} style={styles.header}>
         <SafeAreaView style={styles.safeArea}>
           <View style={styles.headerContent}>
@@ -79,58 +81,76 @@ export default function HelpSupportScreen() {
       >
         {/* Contact Options */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Contact Us</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Contact Us
+          </Text>
           <View style={styles.contactRow}>
             <TouchableOpacity
-              style={styles.contactCard}
+              style={[styles.contactCard, { backgroundColor: colors.card }]}
               onPress={() => handleContact("call")}
             >
               <View style={[styles.iconBg, { backgroundColor: "#e0f2fe" }]}>
                 <Phone size={24} color="#0284c7" />
               </View>
-              <Text style={styles.contactLabel}>Call Support</Text>
+              <Text style={[styles.contactLabel, { color: colors.text }]}>
+                Call Support
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.contactCard}
+              style={[styles.contactCard, { backgroundColor: colors.card }]}
               onPress={() => handleContact("mail")}
             >
               <View style={[styles.iconBg, { backgroundColor: "#f3e8ff" }]}>
                 <Mail size={24} color="#9333ea" />
               </View>
-              <Text style={styles.contactLabel}>Email Us</Text>
+              <Text style={[styles.contactLabel, { color: colors.text }]}>
+                Email Us
+              </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.contactCard}>
+            <TouchableOpacity
+              style={[styles.contactCard, { backgroundColor: colors.card }]}
+            >
               <View style={[styles.iconBg, { backgroundColor: "#dcfce7" }]}>
                 <MessageCircle size={24} color="#16a34a" />
               </View>
-              <Text style={styles.contactLabel}>Live Chat</Text>
+              <Text style={[styles.contactLabel, { color: colors.text }]}>
+                Live Chat
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* FAQs */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>
+            Frequently Asked Questions
+          </Text>
           <View style={styles.faqList}>
             {FAQS.map((faq, index) => (
               <TouchableOpacity
                 key={index}
-                style={styles.faqItem}
+                style={[styles.faqItem, { backgroundColor: colors.card }]}
                 activeOpacity={0.8}
                 onPress={() => toggleExpand(index)}
               >
                 <View style={styles.faqHeader}>
-                  <Text style={styles.faqQuestion}>{faq.question}</Text>
+                  <Text style={[styles.faqQuestion, { color: colors.text }]}>
+                    {faq.question}
+                  </Text>
                   {expandedIndex === index ? (
-                    <ChevronUp size={20} color="#6b7280" />
+                    <ChevronUp size={20} color={colors.textSecondary} />
                   ) : (
-                    <ChevronDown size={20} color="#6b7280" />
+                    <ChevronDown size={20} color={colors.textSecondary} />
                   )}
                 </View>
                 {expandedIndex === index && (
-                  <Text style={styles.faqAnswer}>{faq.answer}</Text>
+                  <Text
+                    style={[styles.faqAnswer, { color: colors.textSecondary }]}
+                  >
+                    {faq.answer}
+                  </Text>
                 )}
               </TouchableOpacity>
             ))}
@@ -142,7 +162,7 @@ export default function HelpSupportScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafb" },
+  container: { flex: 1 },
   header: {
     paddingBottom: 20,
     borderBottomLeftRadius: 24,
@@ -166,7 +186,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#111",
     marginBottom: 16,
   },
   contactRow: {
@@ -176,7 +195,6 @@ const styles = StyleSheet.create({
   },
   contactCard: {
     flex: 1,
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 16,
     alignItems: "center",
@@ -192,10 +210,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
-  contactLabel: { fontSize: 12, fontWeight: "600", color: "#374151" },
+  contactLabel: { fontSize: 12, fontWeight: "600" },
   faqList: { gap: 12 },
   faqItem: {
-    backgroundColor: "#fff",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
@@ -210,9 +227,8 @@ const styles = StyleSheet.create({
   faqQuestion: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#1f2937",
     flex: 1,
     paddingRight: 8,
   },
-  faqAnswer: { marginTop: 12, fontSize: 14, color: "#6b7280", lineHeight: 20 },
+  faqAnswer: { marginTop: 12, fontSize: 14, lineHeight: 20 },
 });

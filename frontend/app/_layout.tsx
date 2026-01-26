@@ -52,13 +52,17 @@ function RootLayoutNav() {
   );
 }
 
+import { ThemeProvider } from "@/context/ThemeContext";
+
 export default function RootLayout() {
   useFrameworkReady();
 
   return (
     <AuthProvider>
-      <RootLayoutNav />
-      <StatusBar style="auto" />
+      <ThemeProvider>
+        <RootLayoutNav />
+        <StatusBar style="auto" />
+      </ThemeProvider>
     </AuthProvider>
   );
 }
