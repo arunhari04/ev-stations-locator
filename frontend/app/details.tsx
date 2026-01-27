@@ -29,7 +29,7 @@ import { useTheme } from "@/context/ThemeContext";
 
 export default function DetailsScreen() {
   const router = useRouter();
-  const { id } = useLocalSearchParams();
+  const { id, type } = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { location } = useAuth();
   const { colors, theme } = useTheme();
@@ -42,13 +42,52 @@ export default function DetailsScreen() {
     if (id) {
       fetchDetails(Number(id));
     }
-  }, [id]);
+  }, [id, type]);
 
   const fetchDetails = async (placeId: number) => {
     try {
-      const data = await api.getPlaceDetails(placeId);
+      let data;
+      // Check type param to distinguish source
+      if (type === "station") {
+        const stationData = await api.getStationDetails(placeId);
+        // Normalize stationData to match component expectations
+        data = {
+          id: stationData.station_id,
+          name: stationData.name,
+          operator: stationData.operator_name,
+          address:
+            `${stationData.street_address || ""} ${stationData.city || ""}`.trim(),
+          latitude: Number(stationData.latitude),
+          longitude: Number(stationData.longitude),
+          status: stationData.status,
+          opening_hours: stationData.opening_hours,
+          amenities: stationData.amenities || [],
+          place_chargers: stationData.station_chargers || [],
+          images: [], // Station model doesn't support images yet
+          price:
+            stationData.station_chargers &&
+            stationData.station_chargers.length > 0
+              ? `$${stationData.station_chargers[0].start_price}/kWh` // Simplified price for now
+              : "N/A",
+          power_kw:
+            stationData.station_chargers &&
+            stationData.station_chargers.length > 0
+              ? Math.max(
+                  ...stationData.station_chargers.map(
+                    (c: any) => c.max_power_kw,
+                  ),
+                )
+              : "N/A",
+          distance: null, // Calculated in component
+        };
+      } else {
+        data = await api.getPlaceDetails(placeId);
+      }
+
       setStation(data);
-      setFavorite(data.is_favorite);
+      if (data.is_favorite !== undefined) {
+        setFavorite(data.is_favorite);
+      }
     } catch (e) {
       console.error(e);
     } finally {

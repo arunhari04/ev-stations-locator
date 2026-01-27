@@ -1,170 +1,110 @@
 from rest_framework import serializers
-from .models import Place, Favorite, PlaceCharger
+from .models import (
+    Favorite, ChargerType, Amenity, StationAmenity, 
+    Station, StationCharger, Brand, Showroom, ShowroomAmenity,
+    ServiceCenter, ServiceAmenity
+)
 
-class PlaceChargerLinkSerializer(serializers.ModelSerializer):
+class FavoriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favorite
+        fields = ['id', 'user', 'station', 'showroom', 'service_center', 'created_at']
+        read_only_fields = ['user', 'created_at', 'station', 'showroom', 'service_center']
+
+    def create(self, validated_data):
+        return super().create(validated_data)
+
+class StationChargerSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='charger_type.name')
     connector_type = serializers.CharField(source='charger_type.connector_type')
     max_power_kw = serializers.FloatField(source='charger_type.max_power_kw')
     
     class Meta:
-        model = PlaceCharger
+        model = StationCharger
         fields = ['id', 'name', 'connector_type', 'max_power_kw', 'start_price', 'end_price', 'is_available']
 
-class PlaceSerializer(serializers.ModelSerializer):
-    distance = serializers.FloatField(read_only=True, required=False)
-    is_favorite = serializers.SerializerMethodField()
-    is_fast_charging = serializers.BooleanField(read_only=True)
-    navigation_url = serializers.SerializerMethodField()
+class StationAmenitySerializer(serializers.ModelSerializer):
+    amenity_name = serializers.CharField(source='amenity.name', read_only=True)
+    
+    class Meta:
+        model = StationAmenity
+        fields = ['amenity_name']
 
-    operator = serializers.StringRelatedField() # Show operator name
-    charger_types = serializers.SerializerMethodField() # Keep for backward compat (list of strings)
-    place_chargers = PlaceChargerLinkSerializer(many=True, read_only=True) # New detailed list
-    amenities = serializers.SerializerMethodField() # JSONField now
-    images = serializers.SerializerMethodField()
-    power_kw = serializers.SerializerMethodField() # Max power
-    price = serializers.SerializerMethodField() # Formatting helper
-    available_count = serializers.SerializerMethodField()
+class StationSerializer(serializers.ModelSerializer):
+    amenities = serializers.SerializerMethodField()
+    station_chargers = StationChargerSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Station
+        fields = '__all__'
+        
+    def get_amenities(self, obj):
+        return list(obj.stationamenity_set.values_list('amenity__name', flat=True))
+
+class BrandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Brand
+        fields = ['brand_id', 'name']
+
+class ShowroomAmenitySerializer(serializers.ModelSerializer):
+    amenity_name = serializers.ReadOnlyField(source='amenity.name')
 
     class Meta:
-        model = Place
-        fields = [
-            'id', 'name', 'place_type', 'address', 'latitude', 'longitude', 
-            'operator', 'opening_hours', 'status', 'created_at',
-            'charger_types', 'place_chargers', 'amenities', 'images', 'power_kw', 'price',
-            'distance', 'is_favorite', 'is_fast_charging', 'navigation_url',
-            'available_count'
-        ]
+        model = ShowroomAmenity
+        fields = ['amenity_name']
 
-    def get_available_count(self, obj):
-        # Count available PlaceCharger entries
-        return obj.place_chargers.filter(is_available=True).count()
+class ShowroomSerializer(serializers.ModelSerializer):
+    brand_name = serializers.ReadOnlyField(source='brand.name')
+    amenities = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Showroom
+        fields = '__all__'
+        
+    def get_amenities(self, obj):
+        return list(obj.showroom_amenities.values_list('amenity__name', flat=True))
 
+class ServiceAmenitySerializer(serializers.ModelSerializer):
+    amenity_name = serializers.ReadOnlyField(source='amenity.name')
+
+    class Meta:
+        model = ServiceAmenity
+        fields = ['amenity_name']
+
+class ServiceCenterSerializer(serializers.ModelSerializer):
+    amenities = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ServiceCenter
+        fields = '__all__'
+
+    def get_amenities(self, obj):
+        return list(obj.service_amenities.values_list('amenity__name', flat=True))
+
+class MapStationSerializer(serializers.ModelSerializer):
+    charger_types = serializers.SerializerMethodField()
+    place_type = serializers.CharField(default='CHARGING')
+    type = serializers.CharField(default='station')
+
+    class Meta:
+        model = Station
+        fields = ['station_id', 'name', 'latitude', 'longitude', 'status', 'charger_types', 'place_type', 'type']
+    
     def get_charger_types(self, obj):
-        # Return unique list of charger types (names)
-        return list(obj.place_chargers.values_list('charger_type__name', flat=True).distinct())
+        return list(obj.station_chargers.values_list('charger_type__name', flat=True).distinct())
 
-    def get_amenities(self, obj):
-        return list(obj.amenities.values_list('name', flat=True))
-
-    def get_images(self, obj):
-        return list(obj.images.values_list('image_url', flat=True))
-
-    def get_power_kw(self, obj):
-        # Return max power available or 0 from ChargerType
-        from django.db.models import Max
-        return obj.place_chargers.aggregate(Max('charger_type__max_power_kw'))['charger_type__max_power_kw__max'] or 0.0
-
-    def get_price(self, obj):
-        # Return formatted price range or single price
-        from django.db.models import Min, Max
-        stats = obj.place_chargers.aggregate(Min('start_price'), Max('end_price'))
-        min_p = stats['start_price__min']
-        max_p = stats['end_price__max']
-        
-        if min_p is None:
-            return "N/A"
-        if min_p == max_p and min_p != 0:
-             return f"${min_p:.2f}/kWh"
-        if min_p == 0 and max_p == 0:
-             return "Free"
-             
-        return f"${min_p:.2f} - ${max_p:.2f}/kWh"
-
-    def get_is_favorite(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return request.user.favorites.filter(place=obj).exists()
-        return False
-
-    def get_navigation_url(self, obj):
-        return f"https://www.google.com/maps/search/?api=1&query={obj.latitude},{obj.longitude}"
-
-class FavoriteSerializer(serializers.ModelSerializer):
-    place = PlaceSerializer(read_only=True)
-    place_id = serializers.PrimaryKeyRelatedField(
-        queryset=Place.objects.all(), source='place', write_only=True
-    )
-
-    class Meta:
-        model = Favorite
-        fields = ['id', 'place', 'place_id', 'created_at']
-        
-    def create(self, validated_data):
-        user = self.context['request'].user
-        place = validated_data['place']
-        favorite, created = Favorite.objects.get_or_create(user=user, place=place)
-        return favorite
-
-class ShowroomDetailSerializer(serializers.ModelSerializer):
-    operator = serializers.SerializerMethodField()
-    amenities = serializers.SerializerMethodField()
-    images = serializers.SerializerMethodField()
-    distance = serializers.FloatField(read_only=True, required=False) # Keep if passed by annotation
-    is_favorite = serializers.SerializerMethodField()
+class MapShowroomSerializer(serializers.ModelSerializer):
+    place_type = serializers.CharField(default='SHOWROOM')
+    type = serializers.CharField(default='showroom')
     
     class Meta:
-        model = Place
-        fields = [
-            'id', 'name', 'place_type', 'address', 'latitude', 'longitude',
-            'opening_hours', 'status', 'operator', 'amenities', 'images', 'distance', 'is_favorite'
-        ]
+        model = Showroom
+        fields = ['showroom_id', 'name', 'latitude', 'longitude', 'status', 'place_type', 'type']
 
-    def get_operator(self, obj):
-        if obj.operator:
-            return {
-                'name': obj.operator.name,
-                'phone': obj.operator.contact_phone,
-                'email': obj.operator.contact_email,
-                'website': obj.operator.website
-            }
-        return None
+class MapServiceCenterSerializer(serializers.ModelSerializer):
+    place_type = serializers.CharField(default='SERVICE')
+    type = serializers.CharField(default='service_center')
 
-    def get_amenities(self, obj):
-        return list(obj.amenities.values_list('name', flat=True))
-
-    def get_images(self, obj):
-        return list(obj.images.values_list('image_url', flat=True))
-
-    def get_is_favorite(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return request.user.favorites.filter(place=obj).exists()
-        return False
-
-
-class ServiceStationDetailSerializer(serializers.ModelSerializer):
-    operator = serializers.SerializerMethodField()
-    amenities = serializers.SerializerMethodField()
-    images = serializers.SerializerMethodField()
-    distance = serializers.FloatField(read_only=True, required=False)
-    is_favorite = serializers.SerializerMethodField()
-    
     class Meta:
-        model = Place
-        fields = [
-            'id', 'name', 'place_type', 'address', 'latitude', 'longitude',
-            'opening_hours', 'status', 'operator', 'amenities', 'images', 
-            'distance', 'is_favorite'
-        ]
-
-    def get_operator(self, obj):
-        if obj.operator:
-            return {
-                'name': obj.operator.name,
-                'phone': obj.operator.contact_phone,
-                'email': obj.operator.contact_email,
-                'website': obj.operator.website
-            }
-        return None
-
-    def get_amenities(self, obj):
-        return list(obj.amenities.values_list('name', flat=True))
-
-    def get_images(self, obj):
-        return list(obj.images.values_list('image_url', flat=True))
-
-    def get_is_favorite(self, obj):
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return request.user.favorites.filter(place=obj).exists()
-        return False
+        model = ServiceCenter
+        fields = ['service_id', 'name', 'latitude', 'longitude', 'status', 'place_type', 'type']

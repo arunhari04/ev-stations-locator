@@ -116,9 +116,9 @@ export default function SearchScreen() {
               Results
             </Text>
             <View style={styles.recentList}>
-              {results.map((station: any) => (
+              {results.map((station: any, idx) => (
                 <TouchableOpacity
-                  key={station.id}
+                  key={`${station.type || "place"}-${station.id}-${idx}`}
                   style={[styles.recentItem, { backgroundColor: colors.card }]}
                   onPress={() =>
                     router.push({
@@ -128,7 +128,10 @@ export default function SearchScreen() {
                           : station.place_type === "SERVICE"
                             ? "/service-station-details"
                             : "/details",
-                      params: { id: station.id },
+                      params: {
+                        id: station.id,
+                        type: station.type || "place",
+                      },
                     })
                   }
                 >

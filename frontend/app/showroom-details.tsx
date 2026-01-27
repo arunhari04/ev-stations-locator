@@ -32,12 +32,10 @@ type Showroom = {
   longitude: number;
   opening_hours: string | null;
   status: string;
-  operator: {
-    name: string;
-    phone: string | null;
-    email: string | null;
-    website: string | null;
-  } | null;
+  operator: string; // Now just a string (Brand Name)
+  phone: string | null; // Top level
+  email: string | null; // Top level
+  website: string | null; // Top level
   amenities: string[];
   images: string[];
   distance?: number;
@@ -84,10 +82,10 @@ export default function ShowroomDetailsScreen() {
     if (!showroom) return;
     try {
       if (favorite) {
-        await api.removeFavorite(showroom.id);
+        await api.removeFavorite(showroom.id, "showroom");
         setFavorite(false);
       } else {
-        await api.addFavorite(showroom.id);
+        await api.addFavorite(showroom.id, "showroom");
         setFavorite(true);
       }
     } catch (e) {
@@ -108,20 +106,20 @@ export default function ShowroomDetailsScreen() {
   };
 
   const handleCall = () => {
-    if (showroom?.operator?.phone) {
-      Linking.openURL(`tel:${showroom.operator.phone}`);
+    if (showroom?.phone) {
+      Linking.openURL(`tel:${showroom.phone}`);
     }
   };
 
   const handleEmail = () => {
-    if (showroom?.operator?.email) {
-      Linking.openURL(`mailto:${showroom.operator.email}`);
+    if (showroom?.email) {
+      Linking.openURL(`mailto:${showroom.email}`);
     }
   };
 
   const handleWebsite = () => {
-    if (showroom?.operator?.website) {
-      Linking.openURL(showroom.operator.website);
+    if (showroom?.website) {
+      Linking.openURL(showroom.website);
     }
   };
 
@@ -177,9 +175,10 @@ export default function ShowroomDetailsScreen() {
   }
 
   // Use the first image from API or a fallback
+  const images = showroom.images || [];
   const heroImage =
-    showroom.images.length > 0
-      ? { uri: showroom.images[0] }
+    images.length > 0
+      ? { uri: images[0] }
       : {
           uri: "https://images.pexels.com/photos/3803517/pexels-photo-3803517.jpeg?auto=compress&cs=tinysrgb&w=1200",
         };
@@ -264,7 +263,7 @@ export default function ShowroomDetailsScreen() {
             </View>
           </TouchableOpacity>
 
-          {showroom.operator?.phone && (
+          {showroom.phone && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleCall}
@@ -277,13 +276,13 @@ export default function ShowroomDetailsScreen() {
                   Phone
                 </Text>
                 <Text style={[styles.contactValue, { color: colors.text }]}>
-                  {showroom.operator.phone}
+                  {showroom.phone}
                 </Text>
               </View>
             </TouchableOpacity>
           )}
 
-          {showroom.operator?.email && (
+          {showroom.email && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleEmail}
@@ -296,13 +295,13 @@ export default function ShowroomDetailsScreen() {
                   Email
                 </Text>
                 <Text style={[styles.contactValue, { color: colors.text }]}>
-                  {showroom.operator.email}
+                  {showroom.email}
                 </Text>
               </View>
             </TouchableOpacity>
           )}
 
-          {showroom.operator?.website && (
+          {showroom.website && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleWebsite}
@@ -315,7 +314,7 @@ export default function ShowroomDetailsScreen() {
                   Website
                 </Text>
                 <Text style={[styles.contactValue, { color: colors.text }]}>
-                  {showroom.operator.website}
+                  {showroom.website}
                 </Text>
               </View>
             </TouchableOpacity>
@@ -363,7 +362,7 @@ export default function ShowroomDetailsScreen() {
               ]}
             >
               <Text style={styles.brandName}>
-                {showroom.operator?.name || "Unknown Brand"}
+                {showroom.operator || "Unknown Brand"}
               </Text>
               <Text
                 style={[styles.brandModels, { color: colors.textSecondary }]}
@@ -374,7 +373,7 @@ export default function ShowroomDetailsScreen() {
           </View>
         </View>
 
-        {showroom.amenities.length > 0 && (
+        {(showroom.amenities || []).length > 0 && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.text }]}>
               Services & Facilities
@@ -398,7 +397,7 @@ export default function ShowroomDetailsScreen() {
         )}
 
         <View style={styles.actions}>
-          {showroom.operator?.phone && (
+          {showroom.phone && (
             <TouchableOpacity style={styles.callButton} onPress={handleCall}>
               <Phone size={20} color="#fff" strokeWidth={2} />
               <Text style={styles.callButtonText}>Call Now</Text>

@@ -201,7 +201,8 @@ export default function HomeScreen() {
               window.ReactNativeWebView.postMessage(JSON.stringify({ 
                 type: 'MARKER_CLICK', 
                 id: station.id,
-                place_type: station.place_type
+                place_type: station.place_type,
+                entity_type: station.type
               }));
             });
 
@@ -264,7 +265,13 @@ export default function HomeScreen() {
             params: { id: data.id },
           });
         } else {
-          router.push({ pathname: "/details", params: { id: data.id } });
+          router.push({
+            pathname: "/details",
+            params: {
+              id: data.id,
+              type: data.type || "place",
+            },
+          });
         }
       }
     } catch (e) {}
@@ -358,9 +365,9 @@ export default function HomeScreen() {
           style={styles.stationList}
           showsVerticalScrollIndicator={false}
         >
-          {stations.map((station) => (
+          {stations.map((station, idx) => (
             <TouchableOpacity
-              key={station.id}
+              key={`${station.type}-${station.id}-${idx}`}
               style={[
                 styles.stationCard,
                 { backgroundColor: theme === "dark" ? "#374151" : "#f9fafb" },
@@ -373,7 +380,10 @@ export default function HomeScreen() {
                       : station.place_type === "SERVICE"
                         ? "/service-station-details"
                         : "/details",
-                  params: { id: station.id },
+                  params: {
+                    id: station.id,
+                    type: station.type || "place",
+                  },
                 })
               }
             >

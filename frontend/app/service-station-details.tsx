@@ -55,25 +55,25 @@ export default function ServiceStationDetailsScreen() {
     try {
       setLoading(true);
       setError(null);
-      const data = await api.getServiceStationDetails(Number(id));
+      const data = await api.getServiceCenterDetails(Number(id));
       setStation(data);
     } catch (err) {
       console.error(err);
-      setError("Failed to load service station details");
+      setError("Failed to load service center details");
     } finally {
       setLoading(false);
     }
   };
 
   const handleCall = () => {
-    if (station?.operator?.phone) {
-      Linking.openURL(`tel:${station.operator.phone}`);
+    if (station?.phone) {
+      Linking.openURL(`tel:${station.phone}`);
     }
   };
 
   const handleEmail = () => {
-    if (station?.operator?.email) {
-      Linking.openURL(`mailto:${station.operator.email}`);
+    if (station?.email) {
+      Linking.openURL(`mailto:${station.email}`);
     }
   };
 
@@ -82,7 +82,6 @@ export default function ServiceStationDetailsScreen() {
       ios: `maps:0,0?q=${station.latitude},${station.longitude}(${station.name})`,
       android: `geo:0,0?q=${station.latitude},${station.longitude}(${station.name})`,
     });
-    if (url) Linking.openURL(url);
     if (url) Linking.openURL(url);
   };
 
@@ -95,9 +94,9 @@ export default function ServiceStationDetailsScreen() {
       setStation((prev: any) => ({ ...prev, is_favorite: !isFav }));
 
       if (isFav) {
-        await api.removeFavorite(station.id);
+        await api.removeFavorite(station.id, "service_center");
       } else {
-        await api.addFavorite(station.id);
+        await api.addFavorite(station.id, "service_center");
       }
     } catch (e) {
       console.error(e);
@@ -229,7 +228,7 @@ export default function ServiceStationDetailsScreen() {
             </View>
           </TouchableOpacity>
 
-          {station.operator?.phone && (
+          {station.phone && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleCall}
@@ -242,13 +241,13 @@ export default function ServiceStationDetailsScreen() {
                   Phone
                 </Text>
                 <Text style={[styles.contactValue, { color: colors.text }]}>
-                  {station.operator.phone}
+                  {station.phone}
                 </Text>
               </View>
             </TouchableOpacity>
           )}
 
-          {station.operator?.email && (
+          {station.email && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
               onPress={handleEmail}
@@ -261,16 +260,16 @@ export default function ServiceStationDetailsScreen() {
                   Email
                 </Text>
                 <Text style={[styles.contactValue, { color: colors.text }]}>
-                  {station.operator.email}
+                  {station.email}
                 </Text>
               </View>
             </TouchableOpacity>
           )}
 
-          {station.operator?.website && (
+          {station.website && (
             <TouchableOpacity
               style={[styles.contactItem, { backgroundColor: colors.card }]}
-              onPress={() => Linking.openURL(station.operator.website)}
+              onPress={() => Linking.openURL(station.website)}
             >
               <Text style={{ fontSize: 20 }}>🌐</Text>
               <View style={styles.contactContent}>
@@ -283,7 +282,7 @@ export default function ServiceStationDetailsScreen() {
                   style={[styles.contactValue, { color: colors.text }]}
                   numberOfLines={1}
                 >
-                  {station.operator.website}
+                  {station.website}
                 </Text>
               </View>
             </TouchableOpacity>

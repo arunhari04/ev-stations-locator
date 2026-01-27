@@ -139,18 +139,25 @@ export const api = {
     return response.json();
   },
 
-  getServiceStationDetails: async (id: number) => {
+  getServiceCenters: async () => {
     const headers = await getHeaders();
-    let response = await fetch(`${API_BASE_URL}/service-stations/${id}/`, {
+    const response = await fetch(`${API_BASE_URL}/service-centers/`, { headers });
+    if (!response.ok) return [];
+    return response.json();
+  },
+
+  getServiceCenterDetails: async (id: number) => {
+    const headers = await getHeaders();
+    let response = await fetch(`${API_BASE_URL}/service-centers/${id}/`, {
       headers,
     });
 
     // If unauthorized (stale token), retry without headers
     if (response.status === 401) {
-      response = await fetch(`${API_BASE_URL}/service-stations/${id}/`);
+      response = await fetch(`${API_BASE_URL}/service-centers/${id}/`);
     }
 
-    if (!response.ok) throw new Error("Failed to load service station details");
+    if (!response.ok) throw new Error("Failed to load service center details");
     return response.json();
   },
 
@@ -164,6 +171,18 @@ export const api = {
     }
 
     if (!response.ok) throw new Error("Failed to load place");
+    return response.json();
+  },
+
+  getStationDetails: async (id: number) => {
+    const headers = await getHeaders();
+    let response = await fetch(`${API_BASE_URL}/stations/${id}/`, { headers });
+    
+    if (response.status === 401) {
+       response = await fetch(`${API_BASE_URL}/stations/${id}/`);
+    }
+
+    if (!response.ok) throw new Error("Failed to load station details");
     return response.json();
   },
 
@@ -219,27 +238,37 @@ export const api = {
     return response.json();
   },
 
-  addFavorite: async (placeId: number) => {
+  addFavorite: async (id: number, type: 'station' | 'showroom' | 'service_center' = 'station') => {
     const token = await AsyncStorage.getItem("auth_token");
     if (!token) return;
 
     const headers = await getHeaders();
+    const body: any = {};
+    if (type === 'station') body.station_id = id;
+    else if (type === 'showroom') body.showroom_id = id;
+    else body.service_id = id;
+
     await fetch(`${API_BASE_URL}/favorites/add/`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ place_id: placeId }),
+      body: JSON.stringify(body),
     });
   },
 
-  removeFavorite: async (placeId: number) => {
+  removeFavorite: async (id: number, type: 'station' | 'showroom' | 'service_center' = 'station') => {
     const token = await AsyncStorage.getItem("auth_token");
     if (!token) return;
 
     const headers = await getHeaders();
+    const body: any = {};
+    if (type === 'station') body.station_id = id;
+    else if (type === 'showroom') body.showroom_id = id;
+    else body.service_id = id;
+
     await fetch(`${API_BASE_URL}/favorites/remove/`, {
       method: "DELETE",
       headers,
-      body: JSON.stringify({ place_id: placeId }),
+      body: JSON.stringify(body),
     });
   },
 };
