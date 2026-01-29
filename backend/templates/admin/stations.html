@@ -72,19 +72,112 @@
                                     <th class="px-4 py-3 text-secondary text-uppercase small">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="stations-table-body"></tbody>
+                            <tbody id="stations-table-body">
+                                {% for station in stations %}
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="bg-emerald-subtle rounded p-2 text-emerald">
+                                                <i data-lucide="zap" class="w-5 h-5"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold">{{ station.name }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="text-truncate" style="max-width: 150px;">{{ station.address.street|default:"-" }}</div>
+                                        <div class="small text-muted">{{ station.address.city|default:"-" }}, {{ station.address.state|default:"-" }}</div>
+                                    </td>
+                                    <td class="px-4 py-3">{{ station.operator_name }}</td>
+                                    <td class="px-4 py-3">
+                                        {% for charger in station.station_chargers.all|slice:":2" %}
+                                        <span class="badge bg-light text-dark border me-1">{{ charger.charger_type.name }}</span>
+                                        {% empty %}
+                                        <span class="text-muted small">-</span>
+                                        {% endfor %}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        {% if station.status == 'active' %}
+                                        <span class="badge bg-emerald-subtle text-emerald rounded-pill">Active</span>
+                                        {% elif station.status == 'maintenance' %}
+                                        <span
+                                            class="badge bg-warning-subtle text-warning rounded-pill">Maintenance</span>
+                                        {% else %}
+                                        <span
+                                            class="badge bg-secondary-subtle text-secondary rounded-pill">Offline</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3">{{ station.station_chargers.count }} Units</td>
+                                    <td class="px-4 py-3">
+                                        {% with charger=station.station_chargers.first %}
+                                        {% if charger %}
+                                        ${{ charger.start_price }} - ${{ charger.end_price }}/kWh
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td class="px-4 py-3">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-light rounded-circle"
+                                                data-bs-toggle="dropdown">
+                                                <i data-lucide="more-vertical" class="w-4 h-4 text-secondary"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                                <li><a class="dropdown-item"
+                                                        href="{% url 'admin-station-detail' station.pk %}">View
+                                                        Details</a></li>
+                                                <li><a class="dropdown-item"
+                                                        href="{% url 'admin-station-edit' station.pk %}">Edit
+                                                        Details</a></li>
+                                                <li>
+                                                    <hr class="dropdown-divider">
+                                                </li>
+                                                <li><a class="dropdown-item text-danger"
+                                                        href="{% url 'admin-station-delete' station.pk %}">Delete</a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        No stations found. Click "Add Station" to create one.
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
                         </table>
                     </div>
                     <div class="card-footer bg-white p-4 rounded-bottom-4">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="text-muted small">Showing 1 to 5 of 5 stations</span>
+                            <span class="text-muted small">Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} stations</span>
                             <nav>
                                 <ul class="pagination pagination-sm mb-0">
+                                    {% if page_obj.has_previous %}
+                                    <li class="page-item"><a class="page-link text-dark"
+                                            href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+                                    {% else %}
                                     <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
+                                    {% endif %}
+
+                                    {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
                                     <li class="page-item active"><a class="page-link bg-emerald border-emerald"
-                                            href="#">1</a></li>
-                                    <li class="page-item"><a class="page-link text-dark" href="#">2</a></li>
-                                    <li class="page-item"><a class="page-link text-dark" href="#">Next</a></li>
+                                            href="?page={{ num }}">{{ num }}</a></li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li
+                                        class="page-item"><a class="page-link text-dark" href="?page={{ num }}">{{ num }}</a></li>
+                                        {% endif %}
+                                        {% endfor %}
+
+                                        {% if page_obj.has_next %}
+                                        <li class="page-item"><a class="page-link text-dark"
+                                                href="?page={{ page_obj.next_page_number }}">Next</a></li>
+                                        {% else %}
+                                        <li class="page-item disabled"><a class="page-link" href="#">Next</a></li>
+                                        {% endif %}
                                 </ul>
                             </nav>
                         </div>
@@ -93,8 +186,10 @@
             </div>
         </main>
     </div>
-    <script src="{% static 'admin/js/data.js' %}"></script>
-    <script src="{% static 'admin/js/stations.js' %}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 
 </html>

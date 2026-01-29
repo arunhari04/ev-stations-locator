@@ -29,34 +29,40 @@
                 </div>
             </header>
             <div class="p-4">
-                <form class="mx-auto" style="max-width: 900px;" data-success-url="{% url 'admin-stations' %}"
-                    onsubmit="event.preventDefault(); window.location.href=this.dataset.successUrl;">
+                <form class="mx-auto" style="max-width: 900px;" method="post">
+                    {% csrf_token %}
 
                     <div class="card border-0 shadow-sm rounded-4 mb-4">
                         <div class="card-body p-4">
-                            <h5 class="fw-bold mb-4">Station Details</h5>
+                            <h5 class="fw-bold mb-4">{% if is_edit %}Edit Station{% else %}Station Details{% endif %}
+                            </h5>
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary fw-medium">Station Name</label>
-                                    <input type="text" class="form-control" placeholder="e.g. Downtown Fast Charge"
+                                    <input type="text" class="form-control" name="name"
+                                        placeholder="e.g. Downtown Fast Charge" value="{{ station.name|default:'' }}"
                                         required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary fw-medium">Operator</label>
-                                    <input type="text" class="form-control" id="form-operator"
-                                        placeholder="e.g. ChargePoint Network" required>
+                                    <input type="text" class="form-control" id="form-operator" name="operator_name"
+                                        placeholder="e.g. ChargePoint Network"
+                                        value="{{ station.operator_name|default:'' }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary fw-medium">Status</label>
-                                    <select class="form-select">
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="MAINTENANCE">Maintenance</option>
-                                        <option value="OFFLINE">Offline</option>
+                                    <select class="form-select" name="status">
+                                        <option value="active" {% if station.status == "active" %}selected{% endif %}>
+                                            Active</option>
+                                        <option value="maintenance" {% if station.status == "maintenance" %}selected{%endif %}>Maintenance</option>
+                                        <option value="offline" {% if station.status == "offline" %}selected{% endif %}>
+                                            Offline</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label text-secondary fw-medium">Opening Hours</label>
-                                    <input type="text" class="form-control" placeholder="e.g. 24/7">
+                                    <input type="text" class="form-control" name="opening_hours" placeholder="e.g. 24/7"
+                                        value="{{ station.opening_hours|default:'' }}">
                                 </div>
                             </div>
                         </div>
@@ -67,27 +73,33 @@
                             <h5 class="fw-bold mb-4">Location</h5>
                             <div class="mb-3">
                                 <label class="form-label text-secondary fw-medium">Full Address</label>
-                                <textarea class="form-control" rows="2" placeholder="123 Main Street"></textarea>
+                                <textarea class="form-control" rows="2" name="address"
+                                    placeholder="123 Main Street">{{ station.address.street|default:'' }}</textarea>
                             </div>
                             <div class="row g-3 mb-3">
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary fw-medium">City</label>
-                                    <input type="text" class="form-control" placeholder="e.g. Austin">
+                                    <input type="text" class="form-control" name="city" placeholder="e.g. Austin"
+                                        value="{{ station.address.city|default:'' }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary fw-medium">State</label>
-                                    <input type="text" class="form-control" placeholder="e.g. TX">
+                                    <input type="text" class="form-control" name="state" placeholder="e.g. TX"
+                                        value="{{ station.address.state|default:'' }}">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label text-secondary fw-medium">Zip Code</label>
-                                    <input type="text" class="form-control" placeholder="e.g. 78701">
+                                    <input type="text" class="form-control" name="zip_code" placeholder="e.g. 78701"
+                                        value="{{ station.address.zip_code|default:'' }}">
                                 </div>
                             </div>
                             <div class="row g-3">
                                 <div class="col-md-6"><label class="form-label">Latitude</label><input type="number"
-                                        step="any" class="form-control"></div>
+                                        step="any" class="form-control" name="latitude"
+                                        value="{{ station.address.latitude|default:'' }}"></div>
                                 <div class="col-md-6"><label class="form-label">Longitude</label><input type="number"
-                                        step="any" class="form-control"></div>
+                                        step="any" class="form-control" name="longitude"
+                                        value="{{ station.address.longitude|default:'' }}"></div>
                             </div>
                         </div>
                     </div>
@@ -100,23 +112,32 @@
                                     onclick="addChargerRow()">+ Add Unit Type</button>
                             </div>
                             <div id="charger-rows-container">
+                                {% if station and station.station_chargers.all %}
+                                {% for charger in station.station_chargers.all %}
                                 <div class="row g-3 mb-3 border-bottom pb-3 charger-row">
                                     <div class="col-md-4">
                                         <label class="form-label text-secondary small">Charger Type</label>
-                                        <select class="form-select form-select-sm charger-type-select"></select>
+                                        <select class="form-select form-select-sm charger-type-select"
+                                            name="charger_types[]">
+                                            {% for ct in charger_types %}
+                                            <option value="{{ ct.id }}" {% if ct.id == charger.charger_type.id %}selected{% endif %}>{{ ct.name }}</option>
+                                            {% endfor %}
+                                        </select>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label text-secondary small">Start Price</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" placeholder="0.00">
+                                            <input type="number" step="0.01" class="form-control" name="start_prices[]"
+                                                placeholder="0.00" value="{{ charger.start_price }}">
                                         </div>
                                     </div>
                                     <div class="col-md-3">
                                         <label class="form-label text-secondary small">End Price</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text">$</span>
-                                            <input type="number" class="form-control" placeholder="0.00">
+                                            <input type="number" step="0.01" class="form-control" name="end_prices[]"
+                                                placeholder="0.00" value="{{ charger.end_price }}">
                                         </div>
                                     </div>
                                     <div class="col-md-2 d-flex align-items-end">
@@ -125,27 +146,111 @@
                                                 class="w-4 h-4"></i></button>
                                     </div>
                                 </div>
+                                {% endfor %}
+                                {% else %}
+                                <div class="row g-3 mb-3 border-bottom pb-3 charger-row">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-secondary small">Charger Type</label>
+                                        <select class="form-select form-select-sm charger-type-select"
+                                            name="charger_types[]">
+                                            {% for ct in charger_types %}
+                                            <option value="{{ ct.id }}">{{ ct.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-secondary small">Start Price</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" step="0.01" class="form-control" name="start_prices[]"
+                                                placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label text-secondary small">End Price</label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text">$</span>
+                                            <input type="number" step="0.01" class="form-control" name="end_prices[]"
+                                                placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 d-flex align-items-end">
+                                        <button type="button" class="btn btn-sm btn-light text-danger w-100"
+                                            onclick="this.closest('.charger-row').remove()"><i data-lucide="trash-2"
+                                                class="w-4 h-4"></i></button>
+                                    </div>
+                                </div>
+                                {% endif %}
                             </div>
                         </div>
+                        <!-- Hidden template for new charger rows -->
+                        <template id="charger-row-template">
+                            <div class="row g-3 mb-3 border-bottom pb-3 charger-row">
+                                <div class="col-md-4">
+                                    <label class="form-label text-secondary small">Charger Type</label>
+                                    <select class="form-select form-select-sm charger-type-select"
+                                        name="charger_types[]">
+                                        {% for ct in charger_types %}
+                                        <option value="{{ ct.id }}">{{ ct.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label text-secondary small">Start Price</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" name="start_prices[]"
+                                            placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label text-secondary small">End Price</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text">$</span>
+                                        <input type="number" step="0.01" class="form-control" name="end_prices[]"
+                                            placeholder="0.00">
+                                    </div>
+                                </div>
+                                <div class="col-md-2 d-flex align-items-end">
+                                    <button type="button" class="btn btn-sm btn-light text-danger w-100"
+                                        onclick="this.closest('.charger-row').remove()"><i data-lucide="trash-2"
+                                            class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <div class="card border-0 shadow-sm rounded-4 mb-4">
                         <div class="card-body p-4">
                             <h5 class="fw-bold mb-3">Amenities</h5>
-                            <div class="row g-3" id="amenities-container"></div>
+                            <div class="row g-3" id="amenities-container">
+                                {% for amenity in amenities %}
+                                <div class="col-6 col-md-4">
+                                    <div class="form-check p-2 border rounded-3 bg-white h-100">
+                                        <input class="form-check-input" type="checkbox" id="am-{{ amenity.id }}"
+                                            name="amenities" value="{{ amenity.id }}" {% if amenity.id in selected_amenities %}checked{% endif %}>
+                                        <label class="form-check-label d-flex align-items-center gap-2 small"
+                                            for="am-{{ amenity.id }}">
+                                            <i data-lucide="check-circle" class="w-4 h-4 text-emerald"></i> {{ amenity.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
 
-                    <div class="d-flex gap-3 pb-5">
-                        <a href="{% url 'admin-stations' %}" class="btn btn-light flex-grow-1 py-3 fw-bold">Cancel</a>
-                        <button type="submit" class="btn btn-emerald text-white flex-grow-1 py-3 fw-bold">Create
-                            Station</button>
+                    <div class="d-flex justify-content-end gap-3 pb-5">
+                        <a href="{% url 'admin-stations' %}" class="btn btn-light px-4 py-2 fw-bold">Cancel</a>
+                        <button type="submit" class="btn btn-emerald text-white px-5 py-2 fw-bold">
+                            {% if is_edit %}Update Station{% else %}Create Station{% endif %}
+                        </button>
                     </div>
                 </form>
             </div>
         </main>
     </div>
-    <script src="{% static 'admin/js/add-station.js' %}"></script>
+    <script src="{% static 'admin/js/add-station.js' %}?v=3"></script>
 </body>
 
 </html>

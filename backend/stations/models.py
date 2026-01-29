@@ -34,7 +34,7 @@ class Address(models.Model):
     street = models.TextField()
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    country = models.CharField(max_length=100, default='USA')
+    country = models.CharField(max_length=100, default='India')
     zip_code = models.CharField(max_length=20)
     
     latitude = models.DecimalField(max_digits=10, decimal_places=8, blank=True, null=True)

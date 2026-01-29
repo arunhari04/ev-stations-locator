@@ -52,18 +52,33 @@
                 <i data-lucide="settings" class="w-5 h-5"></i> Settings
             </a>
         </li>
+        <li class="nav-item mt-3">
+            <span class="text-uppercase text-secondary small fw-bold px-2">Management</span>
+        </li>
+        <li>
+            <a href="{% url 'admin-amenities' %}"
+                class="nav-link {% if 'admin-amenities' in request.resolver_match.url_name %}active-nav-link text-white{% else %}text-secondary{% endif %} d-flex align-items-center gap-2 mb-2">
+                <i data-lucide="list" class="w-5 h-5"></i> Amenities
+            </a>
+        </li>
+        <li>
+            <a href="{% url 'admin-charger-types' %}"
+                class="nav-link {% if 'admin-charger-types' in request.resolver_match.url_name %}active-nav-link text-white{% else %}text-secondary{% endif %} d-flex align-items-center gap-2 mb-2">
+                <i data-lucide="battery-charging" class="w-5 h-5"></i> Charger Types
+            </a>
+        </li>
     </ul>
     <hr>
     <div class="dropdown px-2">
         <div class="d-flex align-items-center gap-3">
             <div class="rounded-circle bg-emerald d-flex align-items-center justify-content-center fw-bold"
-                style="width: 40px; height: 40px;">AU</div>
+                style="width: 40px; height: 40px;">{{ user.username|slice:":2"|upper }}</div>
             <div class="flex-grow-1 overflow-hidden">
-                <div class="fw-bold text-truncate" id="user-name">Admin User</div>
-                <div class="small text-muted text-truncate" id="user-email">admin@example.com</div>
+                <div class="fw-bold text-truncate" id="user-name">{{ user.username }}</div>
+                <div class="small text-muted text-truncate" id="user-email">{{ user.email }}</div>
             </div>
         </div>
-        <a href="{% url 'admin-login' %}"
+        <a href="{% url 'admin-logout' %}"
             class="btn btn-link text-secondary text-decoration-none p-0 mt-3 d-flex align-items-center gap-2 w-100 hover-danger">
             <i data-lucide="log-out" class="w-5 h-5"></i> Logout
         </a>
