@@ -12,7 +12,7 @@ class AdminRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.is_staff
 
 class AdminLoginView(LoginView):
-    template_name = 'admin/login.html'
+    template_name = 'admin/auth/login.html'
     redirect_authenticated_user = True
     
     def get_success_url(self):
@@ -25,7 +25,7 @@ class AdminLogoutView(LogoutView):
     next_page = reverse_lazy('admin-login')
 
 class AdminDashboardView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/dashboard.html'
+    template_name = 'admin/dashboard/dashboard.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -102,7 +102,7 @@ class AdminDashboardView(AdminRequiredMixin, TemplateView):
         return 'bg-secondary'
 
 class AdminStationsView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/stations.html'
+    template_name = 'admin/stations/stations.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -118,11 +118,11 @@ class AdminStationsView(AdminRequiredMixin, TemplateView):
 
 class AdminStationDetailView(AdminRequiredMixin, DetailView):
     model = Station
-    template_name = 'admin/station_detail.html'
+    template_name = 'admin/stations/station_detail.html'
     context_object_name = 'station'
 
 class AdminAddStationView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/add-station.html'
+    template_name = 'admin/stations/add-station.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -192,7 +192,7 @@ class AdminAddStationView(AdminRequiredMixin, TemplateView):
 
 class AdminStationEditView(AdminRequiredMixin, UpdateView):
     model = Station
-    template_name = 'admin/add-station.html' 
+    template_name = 'admin/stations/add-station.html' 
     fields = ['name', 'operator_name', 'status', 'opening_hours']
     
     def get_context_data(self, **kwargs):
@@ -278,7 +278,7 @@ class AdminStationDeleteView(AdminRequiredMixin, DeleteView):
 # --- Amenities Management ---
 class AdminAmenitiesView(AdminRequiredMixin, ListView):
     model = Amenity
-    template_name = 'admin/amenities.html'
+    template_name = 'admin/amenities/amenities.html'
     context_object_name = 'amenities'
     paginate_by = 20
     ordering = ['category', 'name']
@@ -288,7 +288,7 @@ class AdminAmenitiesView(AdminRequiredMixin, ListView):
 
 class AdminAddAmenityView(AdminRequiredMixin, CreateView):
     model = Amenity
-    template_name = 'admin/add-amenity.html'
+    template_name = 'admin/amenities/add-amenity.html'
     fields = ['name', 'category']
     success_url = reverse_lazy('admin-amenities')
 
@@ -303,7 +303,7 @@ class AdminAddAmenityView(AdminRequiredMixin, CreateView):
 
 class AdminEditAmenityView(AdminRequiredMixin, UpdateView):
     model = Amenity
-    template_name = 'admin/add-amenity.html'
+    template_name = 'admin/amenities/add-amenity.html'
     fields = ['name', 'category']
     success_url = reverse_lazy('admin-amenities')
     
@@ -322,14 +322,14 @@ class AdminDeleteAmenityView(AdminRequiredMixin, DeleteView):
 # --- Charger Types Management ---
 class AdminChargerTypesView(AdminRequiredMixin, ListView):
     model = ChargerType
-    template_name = 'admin/charger-types.html'
+    template_name = 'admin/charger_types/charger-types.html'
     context_object_name = 'charger_types'
     paginate_by = 10
     ordering = ['name']
 
 class AdminAddChargerTypeView(AdminRequiredMixin, CreateView):
     model = ChargerType
-    template_name = 'admin/add-charger-type.html'
+    template_name = 'admin/charger_types/add-charger-type.html'
     fields = ['name', 'connector_type', 'max_power_kw']
     success_url = reverse_lazy('admin-charger-types')
 
@@ -340,7 +340,7 @@ class AdminAddChargerTypeView(AdminRequiredMixin, CreateView):
 
 class AdminEditChargerTypeView(AdminRequiredMixin, UpdateView):
     model = ChargerType
-    template_name = 'admin/add-charger-type.html'
+    template_name = 'admin/charger_types/add-charger-type.html'
     fields = ['name', 'connector_type', 'max_power_kw']
     success_url = reverse_lazy('admin-charger-types')
     
@@ -360,7 +360,7 @@ class AdminDeleteChargerTypeView(AdminRequiredMixin, DeleteView):
 class AdminBrandsView(AdminRequiredMixin, ListView):
     from stations.models import Brand
     model = Brand
-    template_name = 'admin/brands.html'
+    template_name = 'admin/brands/brands.html'
     context_object_name = 'brands'
     paginate_by = 20
     ordering = ['name']
@@ -368,7 +368,7 @@ class AdminBrandsView(AdminRequiredMixin, ListView):
 class AdminAddBrandView(AdminRequiredMixin, CreateView):
     from stations.models import Brand
     model = Brand
-    template_name = 'admin/add-brand.html'
+    template_name = 'admin/brands/add-brand.html'
     fields = ['name']
     success_url = reverse_lazy('admin-brands')
 
@@ -380,7 +380,7 @@ class AdminAddBrandView(AdminRequiredMixin, CreateView):
 class AdminEditBrandView(AdminRequiredMixin, UpdateView):
     from stations.models import Brand
     model = Brand
-    template_name = 'admin/add-brand.html'
+    template_name = 'admin/brands/add-brand.html'
     fields = ['name']
     success_url = reverse_lazy('admin-brands')
     
@@ -400,7 +400,7 @@ class AdminDeleteBrandView(AdminRequiredMixin, DeleteView):
 # --- Other Views ---
 
 class AdminShowroomsView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/showrooms.html'
+    template_name = 'admin/showrooms/showrooms.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -417,7 +417,7 @@ class AdminShowroomsView(AdminRequiredMixin, TemplateView):
         return context
 
 class AdminAddShowroomView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/add-showroom.html'
+    template_name = 'admin/showrooms/add-showroom.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -475,12 +475,12 @@ class AdminAddShowroomView(AdminRequiredMixin, TemplateView):
 
 class AdminShowroomDetailView(AdminRequiredMixin, DetailView):
     model = Showroom
-    template_name = 'admin/showroom_detail.html'
+    template_name = 'admin/showrooms/showroom_detail.html'
     context_object_name = 'showroom'
 
 class AdminShowroomEditView(AdminRequiredMixin, UpdateView):
     model = Showroom
-    template_name = 'admin/add-showroom.html'
+    template_name = 'admin/showrooms/add-showroom.html'
     fields = ['name', 'status', 'opening_hours', 'phone', 'email', 'website'] # address and brand handled manually
 
     def get_context_data(self, **kwargs):
@@ -549,7 +549,7 @@ class AdminShowroomDeleteView(AdminRequiredMixin, DeleteView):
         return redirect(self.success_url)
 
 class AdminServiceCentersView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/service-centers.html'
+    template_name = 'admin/service_centers/service-centers.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -565,7 +565,7 @@ class AdminServiceCentersView(AdminRequiredMixin, TemplateView):
         return context
 
 class AdminAddServiceCenterView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/add-service-center.html'
+    template_name = 'admin/service_centers/add-service-center.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -615,13 +615,13 @@ class AdminAddServiceCenterView(AdminRequiredMixin, TemplateView):
 class AdminServiceCenterDetailView(AdminRequiredMixin, DetailView):
     from stations.models import ServiceCenter
     model = ServiceCenter
-    template_name = 'admin/service_center_detail.html'
+    template_name = 'admin/service_centers/service_center_detail.html'
     context_object_name = 'service_center'
 
 class AdminServiceCenterEditView(AdminRequiredMixin, UpdateView):
     from stations.models import ServiceCenter
     model = ServiceCenter
-    template_name = 'admin/add-service-center.html'
+    template_name = 'admin/service_centers/add-service-center.html'
     fields = ['name', 'status', 'opening_hours', 'phone', 'email', 'website', 'is_emergency_service']
 
     def get_context_data(self, **kwargs):
@@ -689,7 +689,7 @@ class AdminUsersView(AdminRequiredMixin, ListView):
     from django.contrib.auth import get_user_model
     User = get_user_model()
     model = User
-    template_name = 'admin/users.html'
+    template_name = 'admin/users/users.html'
     context_object_name = 'users'
     paginate_by = 10
     ordering = ['-date_joined']
@@ -741,7 +741,7 @@ class AdminAddUserView(AdminRequiredMixin, CreateView):
     from django.contrib.auth import get_user_model
     User = get_user_model()
     model = User
-    template_name = 'admin/add-user.html'
+    template_name = 'admin/users/add-user.html'
     fields = ['full_name', 'email', 'is_active', 'is_staff']
     success_url = reverse_lazy('admin-users')
 
@@ -780,7 +780,7 @@ class AdminEditUserView(AdminRequiredMixin, UpdateView):
     from django.contrib.auth import get_user_model
     User = get_user_model()
     model = User
-    template_name = 'admin/add-user.html'
+    template_name = 'admin/users/add-user.html'
     fields = ['full_name', 'email', 'is_active', 'is_staff']
     success_url = reverse_lazy('admin-users')
     
@@ -824,7 +824,7 @@ class AdminDeleteUserView(AdminRequiredMixin, DeleteView):
     # but our frontend now handles confirmation and sends POST.
 
 class AdminSettingsView(AdminRequiredMixin, TemplateView):
-    template_name = 'admin/settings.html'
+    template_name = 'admin/settings/settings.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
