@@ -80,11 +80,17 @@ export default function ServiceStationDetailsScreen() {
   };
 
   const handleMaps = () => {
-    const url = Platform.select({
-      ios: `maps:0,0?q=${station.latitude},${station.longitude}(${station.name})`,
-      android: `geo:0,0?q=${station.latitude},${station.longitude}(${station.name})`,
+    if (!station?.latitude || !station?.longitude) return;
+    
+    router.push({
+      pathname: '/navigation',
+      params: {
+        lat: station.latitude,
+        lng: station.longitude,
+        name: station.name || 'Service Station',
+        address: station.address || ''
+      }
     });
-    if (url) Linking.openURL(url);
   };
 
   const toggleFavorite = async () => {

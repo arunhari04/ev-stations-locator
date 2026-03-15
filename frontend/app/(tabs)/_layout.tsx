@@ -1,9 +1,11 @@
 import { Tabs } from "expo-router";
 import { Home, Search, Heart, User } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../context/ThemeContext";
 
 export default function TabLayout() {
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -16,8 +18,8 @@ export default function TabLayout() {
           borderTopWidth: 1,
           borderTopColor: colors.border,
           paddingTop: 8,
-          paddingBottom: 8,
-          height: 60,
+          paddingBottom: Math.max(insets.bottom, 8),
+          height: 60 + Math.max(insets.bottom - 8, 0),
         },
         tabBarLabelStyle: {
           fontSize: 12,

@@ -22,7 +22,7 @@ class ProfileView(generics.RetrieveUpdateAPIView):
         return self.request.user
 
 class LogoutView(APIView):
-    permission_classes = (permissions.IsAuthenticated,)
+    permission_classes = (permissions.AllowAny,)
 
     def post(self, request):
         try:

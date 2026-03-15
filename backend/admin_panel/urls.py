@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from .views import (
     AdminLoginView, AdminLogoutView, AdminDashboardView, AdminStationsView, AdminAddStationView,
     AdminStationDetailView, AdminStationEditView, AdminStationDeleteView,
@@ -11,6 +12,7 @@ from .views import (
 )
 
 urlpatterns = [
+    path('', RedirectView.as_view(pattern_name='admin-login', permanent=False), name='admin-root'),
     path('login/', AdminLoginView.as_view(), name='admin-login'),
     path('logout/', AdminLogoutView.as_view(), name='admin-logout'),
     path('dashboard/', AdminDashboardView.as_view(), name='admin-dashboard'),

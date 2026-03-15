@@ -135,14 +135,17 @@ export default function ShowroomDetailsScreen() {
   };
 
   const handleDirections = () => {
-    if (showroom) {
-      const scheme = Platform.select({ ios: "maps:", android: "geo:" });
-      const url = Platform.select({
-        ios: `${scheme}?q=${showroom.name}&ll=${showroom.latitude},${showroom.longitude}`,
-        android: `${scheme}0,0?q=${showroom.latitude},${showroom.longitude}(${showroom.name})`,
-      });
-      if (url) Linking.openURL(url);
-    }
+    if (!showroom?.latitude || !showroom?.longitude) return;
+
+    router.push({
+      pathname: '/navigation',
+      params: {
+        lat: showroom.latitude,
+        lng: showroom.longitude,
+        name: showroom.name || 'Showroom',
+        address: showroom.address || ''
+      }
+    });
   };
 
   if (loading) {

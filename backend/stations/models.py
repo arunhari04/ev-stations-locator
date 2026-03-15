@@ -16,6 +16,7 @@ class Amenity(models.Model):
     )
 
     class Meta:
+        db_table = 'amenity_definitions'
         verbose_name_plural = "Amenities"
 
     def __str__(self):
@@ -25,6 +26,9 @@ class ChargerType(models.Model):
     name = models.CharField(max_length=100, unique=True)
     connector_type = models.CharField(max_length=100, help_text="e.g. Type 2, CCS2, CHAdeMO")
     max_power_kw = models.FloatField(help_text="Max power output in kW")
+
+    class Meta:
+        db_table = 'ev_charger_standards'
 
     def __str__(self):
         return f"{self.name} ({self.connector_type}, {self.max_power_kw}kW)"
@@ -43,7 +47,7 @@ class Address(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'addresses'
+        db_table = 'physical_addresses'
 
     def __str__(self):
         return f"{self.street}, {self.city}"
@@ -73,6 +77,9 @@ class Station(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'charging_stations'
+
     def __str__(self):
         return self.name
 
@@ -90,7 +97,7 @@ class StationAmenity(models.Model):
     )
 
     class Meta:
-        db_table = 'station_amenities'
+        db_table = 'charging_station_amenities'
         unique_together = ('station', 'amenity')
 
     def __str__(self):
@@ -106,6 +113,7 @@ class StationCharger(models.Model):
     is_available = models.BooleanField(default=True)
 
     class Meta:
+        db_table = 'station_charging_points'
         unique_together = ('station', 'charger_type')
 
     def __str__(self):
@@ -116,6 +124,9 @@ class Brand(models.Model):
     brand_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=100, unique=True)
     
+    class Meta:
+        db_table = 'vehicle_brands'
+
     def __str__(self):
         return self.name
 
@@ -148,6 +159,9 @@ class Showroom(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'vehicle_showrooms'
+
     def __str__(self):
         return self.name
 
@@ -156,6 +170,7 @@ class ShowroomAmenity(models.Model):
     amenity = models.ForeignKey(Amenity, on_delete=models.CASCADE)
 
     class Meta:
+        db_table = 'showroom_amenity_mappings'
         unique_together = ('showroom', 'amenity')
 
     def __str__(self):
@@ -191,6 +206,9 @@ class ServiceCenter(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        db_table = 'vehicle_service_centers'
+
     def __str__(self):
         return self.name
 
@@ -199,6 +217,7 @@ class ServiceAmenity(models.Model):
     amenity = models.ForeignKey(Amenity, on_delete=models.CASCADE)
 
     class Meta:
+        db_table = 'service_center_amenities'
         unique_together = ('service', 'amenity')
 
     def __str__(self):
@@ -212,6 +231,7 @@ class Favorite(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        db_table = 'user_favorites'
         unique_together = ('user', 'station', 'showroom', 'service_center')
 
     def __str__(self):
