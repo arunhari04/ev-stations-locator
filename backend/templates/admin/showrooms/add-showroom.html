@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% if is_edit %}Edit{% else %}Add{% endif %} Showroom - ChargePoint Admin</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     {% load static %}
     <link rel="stylesheet" href="{% static 'admin/css/style.css' %}">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -136,16 +137,11 @@
                                 </div>
                             </div>
                             <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-medium">Latitude</label>
-                                    <input type="number" step="any" name="latitude" class="form-control"
-                                        placeholder="37.7749" value="{{ showroom.address.latitude|default:'' }}">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="form-label text-secondary fw-medium">Longitude</label>
-                                    <input type="number" step="any" name="longitude" class="form-control"
-                                        placeholder="-122.4194" value="{{ showroom.address.longitude|default:'' }}">
-                                </div>
+                                {% if showroom and showroom.address %}
+                                {% include 'admin/includes/location_picker.html' with latitude=showroom.address.latitude|default:'' longitude=showroom.address.longitude|default:'' %}
+                                {% else %}
+                                {% include 'admin/includes/location_picker.html' with latitude='' longitude='' %}
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -180,6 +176,9 @@
         </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    {% load static %}
+    <script src="{% static 'admin/js/location-picker.js' %}"></script>
     <script>
         lucide.createIcons();
     </script>
